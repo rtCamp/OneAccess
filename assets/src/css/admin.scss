@@ -1,0 +1,103 @@
+/* oneaccess admin styles */
+
+#oneaccess-settings-page,
+#oneaccess-manage-user {
+
+	&:has(.components-snackbar-list) {
+
+		.components-snackbar-list {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			z-index: 1000000;
+			align-items: flex-end;
+			justify-content: flex-end;
+			display: flex;
+			flex-direction: column;
+		}
+	}
+
+	&:not(:has(.components-snackbar-list)) {
+
+		.components-snackbar {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			z-index: 1000000;
+			width: auto;
+		}
+	}
+
+	.components-notice__content {
+		white-space: pre-line !important;
+	}
+
+	.oneaccess-success-notice {
+		background-color: #16a32d;
+		color: #fff;
+	}
+
+	.oneaccess-error-notice {
+		background-color: #e11d1d;
+		color: #fff;
+	}
+
+	
+}
+
+.toplevel_page_oneaccess {
+
+	.oneaccess-site-checkbox {
+		pointer-events: none;
+	}
+}
+
+
+body {
+
+	&.oneaccess-missing-brand-sites,
+	&.oneaccess-brand-site {
+
+		.wp-first-item:has(.oneaccess-plugin-manager-page) {
+			display: none;
+		}
+	}
+
+	&.oneaccess-governing-site-site {
+
+		.wp-first-item:has(.oneaccess-plugin-manager-page) {
+			display: inline-block;
+		}
+	}
+}
+
+[id="oneaccess-site-selection-modal"] {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 10000;
+	min-width: 40vw;
+}
+
+body.oneaccess-site-selection-modal {
+
+	&::before {
+		content: "";
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		z-index: 9999;
+	}
+}
+
+
+[id="toplevel_page_oneaccess"] {
+
+	.dashicons-admin-generic::before {
+		content: url("../images/logo.svg") !important;
+	}
+}
