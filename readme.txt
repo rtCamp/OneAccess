@@ -1,15 +1,15 @@
 === OneAccess ===
 Contributors: Utsav Patel, rtCamp
 Donate link: https://rtcamp.com/
-Tags: OneAccess, OnePress, WordPress, User Manager, Multi-site, User Administration, Enterprise User Management
+Tags: OneAccess, OnePress, User Manager, Multi-site, Enterprise User Management
 Requires at least: 6.5
-Tested up to: 6.8.2
+Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Centralized user management for multiple WordPress sites. Create, manage, and control user access across multiple WordPress installations from a single governing site.
+Centralized user management: create, manage, and control user access across multiple WordPress sites from one governing site.
 
 == Description ==
 

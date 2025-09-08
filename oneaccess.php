@@ -8,7 +8,7 @@
  * Author URI: https://rtcamp.com
  * Text Domain: oneaccess
  * Domain Path: /languages
- * Requires at least: 6.0.0
+ * Requires at least: 6.5
  * Requires PHP: 7.4
  * Tested up to: 6.8.2
  * License: GPLv2 or later
