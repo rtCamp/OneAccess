@@ -1,13 +1,13 @@
 <?php
 /**
- * Rudimentary plugin file.
+ * Main plugin file.
  *
  * @package OneAccess
  */
 
 namespace OneAccess;
 
-use OneAccess\Plugin_Configs\{Constants, Secret_Key };
+use OneAccess\Plugin_Configs\{ Constants, Secret_Key, DB };
 use OneAccess\Traits\Singleton;
 use OneAccess\User\{ Profile_Request, Notice };
 
@@ -39,6 +39,7 @@ class Plugin {
 		Settings::get_instance();
 		REST::get_instance();
 		User_Roles::get_instance();
+		Actions::get_instance();
 	}
 
 	/**
@@ -47,6 +48,7 @@ class Plugin {
 	public function load_plugin_configs(): void {
 		Secret_Key::get_instance();
 		Constants::get_instance();
+		DB::get_instance();
 	}
 
 	/**

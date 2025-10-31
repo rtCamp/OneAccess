@@ -28,6 +28,9 @@
 		"wp-phpunit/wp-phpunit": "^6.2",
 		"yoast/phpunit-polyfills": "^1.0"
 	},
+	"require": {
+		"woocommerce/action-scheduler":"3.9.3"
+	},
 	"config": {
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
