@@ -94,36 +94,36 @@ class Users {
 					'callback'            => array( $this, 'get_users' ),
 					'permission_callback' => '__return_true', // TODO -- add proper validation
 					'args'                => array(
-						'paged' => array(
+						'paged'        => array(
 							'required'          => false,
 							'type'              => 'integer',
 							'default'           => 1,
 							'sanitize_callback' => 'absint',
 						),
-						'per_page' => array(
+						'per_page'     => array(
 							'required'          => false,
 							'type'              => 'integer',
 							'default'           => 20,
 							'sanitize_callback' => 'absint',
 						),
 						'search_query' => array(
-							'required' => false,
-							'type' => 'string',
-							'default' => '',
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'role' => array(
-							'required' => false,
-							'type' => 'string',
-							'default' => '',
+						'role'         => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'site' => array(
-							'required'=>false,
-							'type' => 'string',
-							'default' => '',
+						'site'         => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
-						)
+						),
 					),
 				),
 			)
@@ -572,7 +572,7 @@ class Users {
 	public function reject_profile( \WP_REST_Request $request ): \WP_REST_Response {
 		$user_email        = sanitize_email( $request->get_param( 'user_email' ) );
 		$rejection_comment = sanitize_text_field( $request->get_param( 'rejection_comment' ) );
-		$request_id = absint( $request->get_param( 'request_id' ) );
+		$request_id        = absint( $request->get_param( 'request_id' ) );
 
 		if ( empty( $user_email ) || empty( $rejection_comment ) ) {
 			return new \WP_REST_Response(
@@ -628,8 +628,8 @@ class Users {
 	 * @return \WP_REST_Response
 	 */
 	public function approve_profile( \WP_REST_Request $request ): \WP_REST_Response {
-		
-		$user_id = absint( $request->get_param( 'user_id' ) );
+
+		$user_id    = absint( $request->get_param( 'user_id' ) );
 		$user_email = sanitize_email( $request->get_param( 'user_email' ) );
 		$request_id = sanitize_text_field( $request->get_param( 'request_id' ) );
 
@@ -676,14 +676,14 @@ class Users {
 		DB::approve_profile_request_by_id( $request_id );
 
 		// Update user meta with the new profile data.
-		if( !empty( $profile_requests_data['request_data'] ) ){
+		if ( ! empty( $profile_requests_data['request_data'] ) ) {
 			$user_data = $profile_requests_data['request_data']['data'] ?? array();
 
 			foreach ( $user_data as $key => $value ) {
 				wp_update_user(
 					array(
-						'ID'         => $user->ID,
-						$key         => $value['new'],
+						'ID' => $user->ID,
+						$key => $value['new'],
 					)
 				);
 			}
@@ -693,7 +693,6 @@ class Users {
 			foreach ( $user_metadata as $meta_key => $meta_value ) {
 				update_user_meta( $user->ID, $meta_key, $meta_value['new'] );
 			}
-
 		}
 
 		return new \WP_REST_Response(
@@ -703,7 +702,6 @@ class Users {
 			),
 			200
 		);
-
 	}
 
 	/**
@@ -1142,131 +1140,130 @@ class Users {
 	 * @return \WP_REST_Response
 	 */
 	public function get_users( WP_REST_Request $request ): \WP_REST_Response {
-		
+
 		global $wpdb;
-    
-    $paged = intval( $request->get_param( 'paged' ) ) ?: 1;
-    $per_page = intval( $request->get_param( 'per_page' ) ) ?: 20;
-    $search_query = sanitize_text_field( $request->get_param('search_query') ) ?? '';
-    $role = sanitize_text_field( $request->get_param('role') ) ?? '';
-    $site = sanitize_text_field( $request->get_param('site') ) ?? '';
 
-    // Calculate offset
-    $offset = ( $paged - 1 ) * $per_page;
+		$paged        = intval( $request->get_param( 'paged' ) ) ?: 1;
+		$per_page     = intval( $request->get_param( 'per_page' ) ) ?: 20;
+		$search_query = sanitize_text_field( $request->get_param( 'search_query' ) ) ?? '';
+		$role         = sanitize_text_field( $request->get_param( 'role' ) ) ?? '';
+		$site         = sanitize_text_field( $request->get_param( 'site' ) ) ?? '';
 
-    // Table name
-    $table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+		// Calculate offset
+		$offset = ( $paged - 1 ) * $per_page;
 
-    // Build WHERE conditions
-    $where_conditions = array();
-    $prepare_values = array();
+		// Table name
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
 
-    // Search query - search in email, first_name, last_name
-    if ( ! empty( $search_query ) ) {
-        $where_conditions[] = "(email LIKE %s OR first_name LIKE %s OR last_name LIKE %s)";
-        $search_like = '%' . $wpdb->esc_like( $search_query ) . '%';
-        $prepare_values[] = $search_like;
-        $prepare_values[] = $search_like;
-        $prepare_values[] = $search_like;
-    }
+		// Build WHERE conditions
+		$where_conditions = array();
+		$prepare_values   = array();
 
-    // Role filter - search within sites_info JSON
-    if ( ! empty( $role ) ) {
-        $where_conditions[] = "JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].roles[*]') IS NOT NULL";
-        $prepare_values[] = $role;
-    }
+		// Search query - search in email, first_name, last_name
+		if ( ! empty( $search_query ) ) {
+			$where_conditions[] = '(email LIKE %s OR first_name LIKE %s OR last_name LIKE %s)';
+			$search_like        = '%' . $wpdb->esc_like( $search_query ) . '%';
+			$prepare_values[]   = $search_like;
+			$prepare_values[]   = $search_like;
+			$prepare_values[]   = $search_like;
+		}
 
-    // Site filter - search by site_url or site_name in sites_info JSON
-    if ( ! empty( $site ) ) {
-        $where_conditions[] = "(JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].site_url') IS NOT NULL OR JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].site_name') IS NOT NULL)";
-        $site_like = '%' . $wpdb->esc_like( $site ) . '%';
-        $prepare_values[] = $site_like;
-        $prepare_values[] = $site_like;
-    }
+		// Role filter - search within sites_info JSON
+		if ( ! empty( $role ) ) {
+			$where_conditions[] = "JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].roles[*]') IS NOT NULL";
+			$prepare_values[]   = $role;
+		}
 
-    // Combine WHERE conditions
-    $where_clause = '';
-    if ( ! empty( $where_conditions ) ) {
-        $where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
-    }
+		// Site filter - search by site_url or site_name in sites_info JSON
+		if ( ! empty( $site ) ) {
+			$where_conditions[] = "(JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].site_url') IS NOT NULL OR JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].site_name') IS NOT NULL)";
+			$site_like          = '%' . $wpdb->esc_like( $site ) . '%';
+			$prepare_values[]   = $site_like;
+			$prepare_values[]   = $site_like;
+		}
 
-    // Build count query
-    $count_query = "SELECT COUNT(*) FROM $table_name $where_clause";
-    
-    // Prepare count query if there are values
-    if ( ! empty( $prepare_values ) ) {
-        $count_query = $wpdb->prepare( $count_query, $prepare_values );
-    }
-    
-    $total_users = (int) $wpdb->get_var( $count_query );
+		// Combine WHERE conditions
+		$where_clause = '';
+		if ( ! empty( $where_conditions ) ) {
+			$where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
+		}
 
-    // Build main query
-    $query = "SELECT * FROM $table_name $where_clause ORDER BY updated_at DESC LIMIT %d OFFSET %d";
-    
-    // Add pagination values to prepare array
-    $prepare_values[] = $per_page;
-    $prepare_values[] = $offset;
-    
-    // Prepare and execute query
-    $prepared_query = $wpdb->prepare( $query, $prepare_values );
-    $users = $wpdb->get_results( $prepared_query );
+		// Build count query
+		$count_query = "SELECT COUNT(*) FROM $table_name $where_clause";
 
-    // Process users data - decode sites_info JSON
-    $processed_users = array();
-    foreach ( $users as $user ) {
-        $user_data = array(
-            'id'         => $user->id,
-            'email'      => $user->email,
-            'first_name' => $user->first_name,
-            'last_name'  => $user->last_name,
-            'sites_info' => json_decode( $user->sites_info, true ),
-            'created_at' => $user->created_at,
-            'updated_at' => $user->updated_at,
-        );
+		// Prepare count query if there are values
+		if ( ! empty( $prepare_values ) ) {
+			$count_query = $wpdb->prepare( $count_query, $prepare_values );
+		}
 
-        // Apply post-processing filters if needed
-        // Filter by role in PHP if JSON_SEARCH didn't work properly
-        if ( ! empty( $role ) ) {
-            $has_role = false;
-            foreach ( $user_data['sites_info'] as $site_info ) {
-                if ( isset( $site_info['roles'] ) && in_array( $role, $site_info['roles'], true ) ) {
-                    $has_role = true;
-                    break;
-                }
-            }
-            if ( ! $has_role ) {
-                continue; // Skip this user
-            }
-        }
+		$total_users = (int) $wpdb->get_var( $count_query );
 
-        $processed_users[] = $user_data;
-    }
+		// Build main query
+		$query = "SELECT * FROM $table_name $where_clause ORDER BY updated_at DESC LIMIT %d OFFSET %d";
 
-    // Calculate total pages
-    $total_pages = ceil( $total_users / $per_page );
+		// Add pagination values to prepare array
+		$prepare_values[] = $per_page;
+		$prepare_values[] = $offset;
 
-    return new \WP_REST_Response(
-        array(
-            'success'     => true,
-            'users'       => $processed_users,
-            'pagination'  => array(
-                'total_users'  => $total_users,
-                'total_pages'  => $total_pages,
-                'current_page' => $paged,
-                'per_page'     => $per_page,
-                'has_more'     => $paged < $total_pages,
-            ),
-            'filters'     => array(
-                'search_query' => $search_query,
-                'role'         => $role,
-                'site'         => $site,
-				'paged' => $paged,
-				'per_page' => $per_page,
-            ),
-        ),
-        200
-    );
+		// Prepare and execute query
+		$prepared_query = $wpdb->prepare( $query, $prepare_values );
+		$users          = $wpdb->get_results( $prepared_query );
 
+		// Process users data - decode sites_info JSON
+		$processed_users = array();
+		foreach ( $users as $user ) {
+			$user_data = array(
+				'id'         => $user->id,
+				'email'      => $user->email,
+				'first_name' => $user->first_name,
+				'last_name'  => $user->last_name,
+				'sites_info' => json_decode( $user->sites_info, true ),
+				'created_at' => $user->created_at,
+				'updated_at' => $user->updated_at,
+			);
+
+			// Apply post-processing filters if needed
+			// Filter by role in PHP if JSON_SEARCH didn't work properly
+			if ( ! empty( $role ) ) {
+				$has_role = false;
+				foreach ( $user_data['sites_info'] as $site_info ) {
+					if ( isset( $site_info['roles'] ) && in_array( $role, $site_info['roles'], true ) ) {
+						$has_role = true;
+						break;
+					}
+				}
+				if ( ! $has_role ) {
+					continue; // Skip this user
+				}
+			}
+
+			$processed_users[] = $user_data;
+		}
+
+		// Calculate total pages
+		$total_pages = ceil( $total_users / $per_page );
+
+		return new \WP_REST_Response(
+			array(
+				'success'    => true,
+				'users'      => $processed_users,
+				'pagination' => array(
+					'total_users'  => $total_users,
+					'total_pages'  => $total_pages,
+					'current_page' => $paged,
+					'per_page'     => $per_page,
+					'has_more'     => $paged < $total_pages,
+				),
+				'filters'    => array(
+					'search_query' => $search_query,
+					'role'         => $role,
+					'site'         => $site,
+					'paged'        => $paged,
+					'per_page'     => $per_page,
+				),
+			),
+			200
+		);
 	}
 
 	/**

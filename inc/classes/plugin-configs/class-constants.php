@@ -79,14 +79,14 @@ class Constants {
 
 	/**
 	 * De-duplicated users table.
-	 * 
+	 *
 	 * @var string
 	 */
 	public const ONEACCESS_DEDUPLICATED_USERS_TABLE = 'oneaccess_deduplicated_users';
 
 	/**
 	 * Profile requests table.
-	 * 
+	 *
 	 * @var string
 	 */
 	public const ONEACCESS_PROFILE_REQUESTS_TABLE = 'oneaccess_profile_requests';

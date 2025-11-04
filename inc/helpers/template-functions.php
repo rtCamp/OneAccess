@@ -26,7 +26,7 @@ function oneaccess_get_template_content( string $slug, array $vars = array() ): 
 	if ( file_exists( ONEACCESS_PLUGIN_TEMPLATES_PATH . '/' . $template ) ) {
 		$located_template = ONEACCESS_PLUGIN_TEMPLATES_PATH . '/' . $template;
 	}
-    
+
 	if ( '' === $located_template ) {
 		return '';
 	}

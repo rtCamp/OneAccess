@@ -67,7 +67,7 @@ class Notice {
 		// get user profile request data.
 		$profile_request_data = DB::get_latest_profile_request_by_user_id( $user_id );
 
-		if( ! is_array( $profile_request_data ) || empty( $profile_request_data ) ) {
+		if ( ! is_array( $profile_request_data ) || empty( $profile_request_data ) ) {
 			return;
 		}
 

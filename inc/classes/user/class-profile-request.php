@@ -103,7 +103,7 @@ class Profile_Request {
 				}
 				if ( $post_user_data !== $user_meta_data ) {
 					$updated_metadata[ $field ] = array(
-						'old' => self::sanitize_user_fields( $field, isset($user_meta[ $field ])?$user_meta[ $field ][0] : '' ) ?? '',
+						'old' => self::sanitize_user_fields( $field, isset( $user_meta[ $field ] ) ? $user_meta[ $field ][0] : '' ) ?? '',
 						'new' => self::sanitize_user_fields( $field, $post_data[ $field ] ) ?? '',
 					);
 					$post_data[ $field ]        = $user_meta[ $field ][0] ?? '';
@@ -167,7 +167,7 @@ class Profile_Request {
 			'requested_at' => current_time( 'mysql' ),
 		);
 
-		DB::add_profile_request($user_id, $profile_request_data[ $user_id ], 'pending' );
+		DB::add_profile_request( $user_id, $profile_request_data[ $user_id ], 'pending' );
 	}
 
 	/**
