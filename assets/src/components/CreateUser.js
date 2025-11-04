@@ -1,4 +1,6 @@
-/* eslint-disable @wordpress/no-unsafe-wp-apis */
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import {
@@ -161,7 +163,7 @@ const CreateUser = ( { availableSites } ) => {
 				return;
 			}
 
-			const results = data?.data?.results || [];
+			const results = data?.data?.response_data || [];
 			const newNotices = results.map( ( result ) => ( {
 				id: Math.random().toString(),
 				status: result.status === 'success' ? 'success' : 'error',
@@ -514,5 +516,3 @@ const CreateUser = ( { availableSites } ) => {
 };
 
 export default CreateUser;
-
-/* eslint-enable @wordpress/no-unsafe-wp-apis */
