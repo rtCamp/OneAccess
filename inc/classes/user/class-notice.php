@@ -7,6 +7,7 @@
 
 namespace OneAccess\User;
 
+use OneAccess\Plugin_Configs\DB;
 use OneAccess\Traits\Singleton;
 use OneAccess\Utils;
 
@@ -60,23 +61,24 @@ class Notice {
 			return;
 		}
 
-		// get user profile request data.
-		$profile_request_data = Utils::get_users_profile_request_data();
-
 		// get user from user_id or current user.
 		$user_id = isset( $_GET['user_id'] ) ? filter_input( INPUT_GET, 'user_id', FILTER_SANITIZE_NUMBER_INT ) : get_current_user_id();  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this is to know on which user profile page we are to show notice or not.
-		if ( ! isset( $profile_request_data[ $user_id ] ) ) {
+
+		// get user profile request data.
+		$profile_request_data = DB::get_latest_profile_request_by_user_id( $user_id );
+
+		if( ! is_array( $profile_request_data ) || empty( $profile_request_data ) ) {
 			return;
 		}
 
 		// get user request status.
-		$request_status = $profile_request_data[ $user_id ]['status'] ?? 'pending';
+		$request_status = $profile_request_data['status'] ?? 'pending';
 
 		// if request is pending, show notice.
 		if ( 'pending' === $request_status ) {
 			add_action( 'admin_notices', array( $this, 'pending_notice' ) );
 		} elseif ( 'rejected' === $request_status ) {
-			self::$rejection_comment = $profile_request_data[ $user_id ]['rejection_comment'] ?? '';
+			self::$rejection_comment = $profile_request_data['comment'] ?? '';
 			add_action( 'admin_notices', array( $this, 'rejected_notice' ) );
 		}
 	}
