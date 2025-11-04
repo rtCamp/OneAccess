@@ -9,6 +9,7 @@ namespace OneAccess\Settings;
 
 use OneAccess\Utils;
 use OneAccess\Traits\Singleton;
+use OneAccess\Plugin_Configs\DB;
 
 
 /**
@@ -78,11 +79,11 @@ class Brand_Site {
 	public function render_profile_request_status_column( $value, $column_name, $user_id ): string {
 		if ( 'profile_request_status' === $column_name ) {
 			// Get the user's profile request status.
-			$profile_update_requests = Utils::get_users_profile_request_data();
-			if ( ! isset( $profile_update_requests[ $user_id ] ) ) {
+			$profile_update_requests = DB::get_latest_profile_request_by_user_id( $user_id );
+			if ( empty( $profile_update_requests ) ) {
 				return '<span class="oneaccess-pill oneaccess-pill--no-request">' . __( 'No Request', 'oneaccess' ) . '</span>';
 			} else {
-				$status = $profile_update_requests[ $user_id ]['status'] ?? 'pending';
+				$status = $profile_update_requests['status'] ?? 'pending';
 				switch ( $status ) {
 					case 'rejected':
 						return '<span class="oneaccess-pill oneaccess-pill--rejected">' . __( 'Rejected', 'oneaccess' ) . '</span>';
