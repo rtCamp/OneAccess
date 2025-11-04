@@ -25,13 +25,12 @@ const TabPanel = () => {
 	const fetchProfileRequestsCount = useCallback( async () => {
 		try {
 			const response = await fetch(
-				`${ API_NAMESPACE }/all-profile-requests?${ new Date().getTime().toString() }`,
+				`${ API_NAMESPACE }/get-profile-requests?${ new Date().getTime().toString() }`,
 				{
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
 					},
 				},
 			);
@@ -39,7 +38,7 @@ const TabPanel = () => {
 				throw new Error( 'Failed to fetch profile requests count' );
 			}
 			const data = await response.json();
-			setProfileRequestsCount( data.count || 0 );
+			setProfileRequestsCount( data?.total_pending_count || 0 );
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -139,7 +138,7 @@ const TabPanel = () => {
 			title: 'Profile Requests',
 			icon: edit,
 			content: (
-				<ProfileRequests setProfileRequestsCount={ setProfileRequestsCount } />
+				<ProfileRequests setProfileRequestsCount={ setProfileRequestsCount } availableSites={ availableSites } />
 			),
 		},
 	];

@@ -1,6 +1,8 @@
-/* eslint-disable @wordpress/no-unsafe-wp-apis */
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, useCallback } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import {
 	Card,
 	CardHeader,
@@ -26,10 +28,8 @@ import { decodeEntities } from '@wordpress/html-entities';
 
 const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
-const API_KEY = OneAccess.apiKey;
 const AVAILABLE_ROLES = OneAccess.availableRoles || [];
 const PER_PAGE = 20;
-const PAGE = 1;
 
 const SharedUsers = ( { availableSites } ) => {
 	const [ isLoading, setIsLoading ] = useState( false );
@@ -41,8 +41,9 @@ const SharedUsers = ( { availableSites } ) => {
 	const [ searchTerm, setSearchTerm ] = useState( '' );
 	const [ selectedSiteFilter, setSelectedSiteFilter ] = useState( '' );
 	const [ selectedUserRole, setSelectedUserRole ] = useState( '' );
-	const [ page, setPage ] = useState( PAGE );
+	const [ page, setPage ] = useState( 1 );
 	const [ totalPages, setTotalPages ] = useState( 1 );
+	const [ _, setTotalUsers ] = useState( 0 );
 
 	// Modal states
 	const [ showManageRolesModal, setShowManageRolesModal ] = useState( false );
@@ -59,29 +60,80 @@ const SharedUsers = ( { availableSites } ) => {
 	const fetchUsers = useCallback( async () => {
 		setIsLoading( true );
 		try {
+			// Build query parameters
+			const params = new URLSearchParams( {
+				paged: page.toString(),
+				per_page: PER_PAGE.toString(),
+			} );
+
+			// Add optional filters
+			if ( searchTerm ) {
+				params.append( 'search_query', searchTerm );
+			}
+			if ( selectedUserRole ) {
+				params.append( 'role', selectedUserRole );
+			}
+			if ( selectedSiteFilter ) {
+				params.append( 'site', selectedSiteFilter );
+			}
+
 			const response = await fetch(
-				`${ API_NAMESPACE }/new-users?${ new Date().getTime().toString() }`,
+				`${ API_NAMESPACE }/new-users?${ params.toString() }`,
 				{
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
 					},
 				},
 			);
 
 			if ( ! response.ok ) {
-				setNotice( {
-					type: 'error',
-					message: __( 'Failed to fetch users. Please try again later.', 'oneaccess' ),
-				} );
 				throw new Error( 'Failed to fetch users' );
 			}
 
 			const data = await response.json();
-			setUsers( data.users || [] );
-			setTotalPages( Math.ceil( ( data.count || 0 ) / PER_PAGE ) );
+
+			if ( ! data.success ) {
+				throw new Error( data.message || 'Failed to fetch users' );
+			}
+
+			// Transform the API response to match component's expected format
+			const transformedUsers = data.users.map( ( user ) => ( {
+				id: user.id,
+				username: user.email.split( '@' )[ 0 ], // Fallback username from email
+				email: user.email,
+				full_name: user.full_name || `${ user.first_name } ${ user.last_name }`.trim() || user.email,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				sites: user.sites_info?.map( ( site ) => ( {
+					site_url: site.site_url,
+					site_name: site.site_name,
+					siteName: site.site_name,
+					siteUrl: site.site_url,
+					// Get the first role from roles array, or handle object structure
+					role: ( () => {
+						if ( Array.isArray( site.roles ) ) {
+							return site.roles[ 0 ];
+						}
+						if ( typeof site.roles === 'object' && site.roles !== null ) {
+							return Object.values( site.roles )[ 0 ];
+						}
+						return 'subscriber';
+					} )(),
+					roles: site.roles,
+					user_id: site.user_id,
+				} ) ) || [],
+				sites_info: user.sites_info,
+				all_roles: user.all_roles || [],
+				all_sites: user.all_sites || [],
+				created_at: user.created_at,
+				updated_at: user.updated_at,
+			} ) );
+
+			setUsers( transformedUsers );
+			setTotalUsers( data.pagination.total_users );
+			setTotalPages( data.pagination.total_pages );
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -90,30 +142,22 @@ const SharedUsers = ( { availableSites } ) => {
 		} finally {
 			setIsLoading( false );
 		}
-	}, [] );
+	}, [ page, searchTerm, selectedUserRole, selectedSiteFilter ] );
 
 	useEffect( () => {
 		fetchUsers();
-	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ fetchUsers ] );
 
-	// Filter users based on search term and site filter
-	const filteredUsers = users.filter( ( user ) => {
-		const matchesSearch = user.username.toLowerCase().includes( searchTerm.toLowerCase() ) ||
-                                user.email.toLowerCase().includes( searchTerm.toLowerCase() ) ||
-                                user.full_name.toLowerCase().includes( searchTerm.toLowerCase() );
-
-		const matchesSiteFilter = ! selectedSiteFilter ||
-                user.sites.some( ( site ) => site.site_url === selectedSiteFilter );
-
-		const matchesRoleFilter = ! selectedUserRole ||
-				user.sites.some( ( site ) => site.role === selectedUserRole );
-
-		return matchesSearch && matchesSiteFilter && matchesRoleFilter;
-	} );
+	// Reset to page 1 when filters change
+	useEffect( () => {
+		if ( page !== 1 ) {
+			setPage( 1 );
+		}
+	}, [ searchTerm, selectedUserRole, selectedSiteFilter ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Get sites available for adding (sites user is not already assigned to)
 	const getAvailableSitesForUser = ( user ) => {
-		const userSiteUrls = user.sites?.map( ( site ) => site.site_url );
+		const userSiteUrls = user.sites?.map( ( site ) => site.site_url ) || [];
 		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.siteUrl ) );
 	};
 
@@ -123,11 +167,8 @@ const SharedUsers = ( { availableSites } ) => {
 
 		// Initialize user roles with current roles
 		const initialRoles = {};
-		availableSites.forEach( ( site ) => {
-			const userSite = user.sites.find( ( s ) => s.site_url === site.siteUrl );
-			if ( userSite ) {
-				initialRoles[ site.siteUrl ] = userSite ? userSite.role : '';
-			}
+		user.sites?.forEach( ( site ) => {
+			initialRoles[ site.site_url ] = site.role || '';
 		} );
 
 		setUserRoles( initialRoles );
@@ -142,7 +183,6 @@ const SharedUsers = ( { availableSites } ) => {
 	};
 
 	const handleUserDeletion = ( user ) => {
-		// Implement user deletion logic here
 		setSelectedUser( user );
 		setSelectedSitesToDeleteUser( [] );
 		setShowUserDeletionModal( true );
@@ -161,7 +201,6 @@ const SharedUsers = ( { availableSites } ) => {
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
 					},
 					body: JSON.stringify( {
 						username: currentUser.username,
@@ -201,7 +240,7 @@ const SharedUsers = ( { availableSites } ) => {
 	}, [ selectedSitesToDeleteUser, fetchUsers, selectedUser ] );
 
 	// Handle updating user roles
-	const handleUpdateRoles = async () => {
+	const handleUpdateRoles = useCallback( async () => {
 		setIsUpdatingRoles( true );
 		try {
 			const response = await fetch(
@@ -211,7 +250,6 @@ const SharedUsers = ( { availableSites } ) => {
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
 					},
 					body: JSON.stringify( {
 						username: selectedUser.username,
@@ -236,7 +274,7 @@ const SharedUsers = ( { availableSites } ) => {
 			} );
 
 			// Refresh users list
-			fetchUsers();
+			await fetchUsers();
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -246,10 +284,10 @@ const SharedUsers = ( { availableSites } ) => {
 			setIsUpdatingRoles( false );
 			setShowManageRolesModal( false );
 		}
-	};
+	}, [ userRoles, fetchUsers, selectedUser ] );
 
 	// Handle adding user to sites
-	const handleAddUserToSites = async () => {
+	const handleAddUserToSites = useCallback( async () => {
 		setIsAddingToSites( true );
 		try {
 			const response = await fetch(
@@ -259,7 +297,6 @@ const SharedUsers = ( { availableSites } ) => {
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
 					},
 					body: JSON.stringify( {
 						username: selectedUser.username,
@@ -287,7 +324,7 @@ const SharedUsers = ( { availableSites } ) => {
 			} );
 
 			// Refresh users list
-			fetchUsers();
+			await fetchUsers();
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -297,17 +334,17 @@ const SharedUsers = ( { availableSites } ) => {
 			setIsAddingToSites( false );
 			setShowAddToSitesModal( false );
 		}
+	}, [ selectedSitesToAdd, fetchUsers, selectedUser ] );
+
+	// Handle page change
+	const handlePageChange = ( newPage ) => {
+		setPage( newPage );
 	};
 
-	const filterUsersForPagination = useCallback( () => {
-		const startIndex = ( page - 1 ) * PER_PAGE;
-		const result = filteredUsers.slice( startIndex, startIndex + PER_PAGE );
-		return result;
-	}, [ filteredUsers, page ] );
-
-	useEffect( () => {
-		setTotalPages( Math.ceil( filteredUsers.length / PER_PAGE ) );
-	}, [ filteredUsers ] );
+	// Get role label from role value
+	const getRoleLabel = ( roleValue ) => {
+		return AVAILABLE_ROLES[ roleValue ] || ( roleValue ?? __( 'No Role', 'oneaccess' ) );
+	};
 
 	return (
 		<>
@@ -320,7 +357,7 @@ const SharedUsers = ( { availableSites } ) => {
 						<TextControl
 							placeholder={ __( 'Search users by name or email..', 'oneaccess' ) }
 							value={ searchTerm }
-							onChange={ setSearchTerm }
+							onChange={ ( value ) => setSearchTerm( value ) }
 							label={ __( 'Search Users', 'oneaccess' ) }
 						/>
 						<SelectControl
@@ -349,7 +386,7 @@ const SharedUsers = ( { availableSites } ) => {
 						/>
 					</Grid>
 
-					<table className="wp-list-table widefat fixed striped">
+					<table className="wp-list-table widefat fixed striped" style={ { marginTop: '16px' } }>
 						<thead>
 							<tr>
 								<th>{ __( 'Name', 'oneaccess' ) }</th>
@@ -359,25 +396,43 @@ const SharedUsers = ( { availableSites } ) => {
 							</tr>
 						</thead>
 						<tbody>
-							{
-								isLoading ? (
-									<tr>
-										<td colSpan="4" style={ { textAlign: 'center' } }>
-											<Spinner />
-										</td>
-									</tr>
-								) : null
-							}
-							{ isLoading === false && filteredUsers.length === 0 && (
+							{ isLoading ? (
 								<tr>
-									<td colSpan="4" style={ { textAlign: 'center' } }>
-										{ __( 'No users found.', 'oneaccess' ) }
+									<td colSpan="4" style={ { textAlign: 'center', padding: '32px' } }>
+										<Spinner />
+										<div style={ { marginTop: '8px' } }>{ __( 'Loading users…', 'oneaccess' ) }</div>
+									</td>
+								</tr>
+							) : null }
+
+							{ ! isLoading && users.length === 0 && (
+								<tr>
+									<td colSpan="4" style={ { textAlign: 'center', padding: '32px' } }>
+										<p style={ { margin: 0, color: '#6c757d' } }>
+											{ __( 'No users found.', 'oneaccess' ) }
+										</p>
+										{ ( searchTerm || selectedUserRole || selectedSiteFilter ) && (
+											<Button
+												variant="link"
+												onClick={ () => {
+													setSearchTerm( '' );
+													setSelectedUserRole( '' );
+													setSelectedSiteFilter( '' );
+												} }
+												style={ { marginTop: '8px' } }
+											>
+												{ __( 'Clear filters', 'oneaccess' ) }
+											</Button>
+										) }
 									</td>
 								</tr>
 							) }
-							{ filterUsersForPagination()?.map( ( user, index ) => (
-								<tr key={ `${ user.username }-${ index }` }>
-									<td>{ decodeEntities( user.full_name ?? user.username ) }</td>
+
+							{ ! isLoading && users?.map( ( user, index ) => (
+								<tr key={ `${ user.id }-${ index }` }>
+									<td>
+										<strong>{ decodeEntities( user.full_name || user.username ) }</strong>
+									</td>
 									<td>{ user.email }</td>
 									<td>
 										<div
@@ -389,24 +444,31 @@ const SharedUsers = ( { availableSites } ) => {
 												flexWrap: 'wrap',
 											} }
 										>
-											{ user.sites?.map( ( site, siteIndex ) => (
-
-												<span
-													key={ `${ site.site_url }-${ siteIndex }` }
-													className="site-badge"
-													style={ {
-														display: 'inline-block',
-														margin: '0',
-														padding: '2px 8px',
-														backgroundColor: '#007cba',
-														color: '#fff',
-														borderRadius: '4px',
-														fontSize: '12px',
-													} }
-												>
-													{ decodeEntities( site.site_name ) } ({ AVAILABLE_ROLES[ site.role ] || site.role })
+											{ user.sites?.length > 0 ? (
+												user.sites?.map( ( site, siteIndex ) => (
+													<span
+														key={ `${ site.site_url }-${ siteIndex }` }
+														className="site-badge"
+														style={ {
+															display: 'inline-block',
+															margin: '0',
+															padding: '4px 10px',
+															backgroundColor: '#007cba',
+															color: '#fff',
+															borderRadius: '4px',
+															fontSize: '12px',
+															fontWeight: '500',
+														} }
+														title={ `${ site.site_name } - ${ getRoleLabel( site.role ) }` }
+													>
+														{ decodeEntities( site.site_name ) } ({ getRoleLabel( site.role ) })
+													</span>
+												) )
+											) : (
+												<span style={ { color: '#6c757d', fontSize: '12px' } }>
+													{ __( 'No sites assigned', 'oneaccess' ) }
 												</span>
-											) ) }
+											) }
 										</div>
 									</td>
 									<td>
@@ -425,18 +487,17 @@ const SharedUsers = ( { availableSites } ) => {
 																handleManageRoles( user );
 																onClose();
 															} }
+															disabled={ ! user.sites || user.sites.length === 0 }
 														>
 															{ __( 'Manage Roles', 'oneaccess' ) }
 														</MenuItem>
 														{ getAvailableSitesForUser( user ).length > 0 && (
-
 															<MenuItem
 																icon={ globe }
 																onClick={ () => {
 																	handleAddToSites( user );
 																	onClose();
 																} }
-																disabled={ getAvailableSitesForUser( user ).length === 0 }
 															>
 																{ __( 'Add to Sites', 'oneaccess' ) }
 															</MenuItem>
@@ -450,6 +511,7 @@ const SharedUsers = ( { availableSites } ) => {
 																onClose();
 															} }
 															isDestructive
+															disabled={ ! user.sites || user.sites.length === 0 }
 														>
 															{ __( 'Delete User', 'oneaccess' ) }
 														</MenuItem>
@@ -462,24 +524,30 @@ const SharedUsers = ( { availableSites } ) => {
 							) ) }
 						</tbody>
 					</table>
-					{ (
-						<div style={ { marginTop: '16px', display: 'flex', justifyContent: 'center' } }>
+
+					{ totalPages > 1 && (
+						<div style={ { marginTop: '16px', display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' } }>
 							<Button
 								variant="secondary"
-								onClick={ () => setPage( ( prev ) => Math.max( prev - 1, 1 ) ) }
-								disabled={ page === 1 }
-								style={ { marginRight: '8px' } }
+								onClick={ () => handlePageChange( page - 1 ) }
+								disabled={ page === 1 || isLoading }
 							>
 								{ __( 'Previous', 'oneaccess' ) }
 							</Button>
-							<span style={ { alignSelf: 'center' } }>
-								{ __( 'Page', 'oneaccess' ) } { page } { __( 'of', 'oneaccess' ) } { totalPages === 0 ? 1 : totalPages }
-							</span>
+							<div style={ { color: '#6c757d', fontSize: '14px' } }>
+								{
+									sprintf(
+										/* translators: 1: Current page number. 2: Total pages. */
+										__( 'Page %1$s of %2$s', 'oneaccess' ),
+										page,
+										totalPages,
+									)
+								}
+							</div>
 							<Button
 								variant="secondary"
-								onClick={ () => setPage( ( prev ) => Math.min( prev + 1, totalPages ) ) }
-								disabled={ page >= totalPages }
-								style={ { marginLeft: '8px' } }
+								onClick={ () => handlePageChange( page + 1 ) }
+								disabled={ page >= totalPages || isLoading }
 							>
 								{ __( 'Next', 'oneaccess' ) }
 							</Button>
@@ -500,7 +568,7 @@ const SharedUsers = ( { availableSites } ) => {
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
 								{ __( 'Manage roles for user: ', 'oneaccess' ) }
-								<strong>{ selectedUser.username }</strong> ({ selectedUser.email })
+								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
 							</p>
 						</div>
 
@@ -525,14 +593,14 @@ const SharedUsers = ( { availableSites } ) => {
 									>
 										<div style={ { marginBottom: '8px' } }>
 											<div style={ { fontWeight: '500', color: '#23282d' } }>
-												{ site.siteName ?? site.site_name }
+												{ site.site_name }
 											</div>
 											<div style={ { fontSize: '12px', color: '#6c757d' } }>
-												{ site.siteUrl ?? site.site_url }
+												{ site.site_url }
 											</div>
 										</div>
 										<SelectControl
-											value={ userRoles[ site.site_url ] || '' }
+											value={ userRoles[ site.site_url ] || site.role || '' }
 											options={ [
 												...Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
 													value: role,
@@ -561,7 +629,7 @@ const SharedUsers = ( { availableSites } ) => {
 							<Button
 								variant="primary"
 								onClick={ handleUpdateRoles }
-								disabled={ isUpdatingRoles || selectedUser.sites.every( ( site ) => userRoles[ site.site_url ] === ( site.role || '' ) ) }
+								disabled={ isUpdatingRoles || selectedUser.sites.every( ( site ) => userRoles[ site.site_url ] === site.role ) }
 								isBusy={ isUpdatingRoles }
 							>
 								<Dashicon icon="admin-users" style={ { marginRight: '8px' } } />
@@ -584,7 +652,7 @@ const SharedUsers = ( { availableSites } ) => {
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
 								{ __( 'Add user to additional sites: ', 'oneaccess' ) }
-								<strong>{ selectedUser.username }</strong> ({ selectedUser.email })
+								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
 							</p>
 						</div>
 
@@ -667,32 +735,34 @@ const SharedUsers = ( { availableSites } ) => {
 																		siteUrl: site.siteUrl,
 																		siteName: site.siteName,
 																		apiKey: site.apiKey,
+																		role: 'subscriber',
 																	},
 																] );
 															}
 														} }
 													/>
 
-													<div style={ { marginTop: '8px', marginLeft: '24px' } }>
-														<SelectControl
-															disabled={ selectedSitesToAdd.some( ( s ) => s.siteUrl === site.siteUrl ) === false }
-															label={ __( 'Role', 'oneaccess' ) }
-															value={ selectedSite?.role || 'subscriber' }
-															options={ Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
-																value: role,
-																label,
-															} ) ) }
-															onChange={ ( value ) => {
-																setSelectedSitesToAdd( ( prev ) =>
-																	prev?.map( ( s ) =>
-																		s.siteUrl === site.siteUrl
-																			? { ...s, role: value }
-																			: s,
-																	),
-																);
-															} }
-														/>
-													</div>
+													{ isSelected && (
+														<div style={ { marginTop: '8px', marginLeft: '24px' } }>
+															<SelectControl
+																label={ __( 'Role', 'oneaccess' ) }
+																value={ selectedSite?.role || 'subscriber' }
+																options={ Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
+																	value: role,
+																	label,
+																} ) ) }
+																onChange={ ( value ) => {
+																	setSelectedSitesToAdd( ( prev ) =>
+																		prev?.map( ( s ) =>
+																			s.siteUrl === site.siteUrl
+																				? { ...s, role: value }
+																				: s,
+																		),
+																	);
+																} }
+															/>
+														</div>
+													) }
 												</div>
 											);
 										} ) }
@@ -723,9 +793,7 @@ const SharedUsers = ( { availableSites } ) => {
 								disabled={ selectedSitesToAdd.length === 0 || isAddingToSites }
 								isBusy={ isAddingToSites }
 							>
-								<Icon
-									icon={ plus }
-								/>
+								<Icon icon={ plus } />
 								{ isAddingToSites ? __( 'Adding to Sites…', 'oneaccess' ) : __( 'Add to Sites', 'oneaccess' ) }
 							</Button>
 						</HStack>
@@ -733,7 +801,7 @@ const SharedUsers = ( { availableSites } ) => {
 				</Modal>
 			) }
 
-			{ /* User Deletion Modal - Placeholder for future implementation */ }
+			{ /* User Deletion Modal */ }
 			{ showUserDeletionModal && selectedUser && (
 				<Modal
 					title={ __( 'Delete User', 'oneaccess' ) }
@@ -745,7 +813,7 @@ const SharedUsers = ( { availableSites } ) => {
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
 								{ __( 'Delete User from selected sites: ', 'oneaccess' ) }
-								<strong>{ selectedUser.username }</strong> ({ selectedUser.email })
+								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
 							</p>
 						</div>
 
@@ -756,12 +824,12 @@ const SharedUsers = ( { availableSites } ) => {
 										label={ __( 'Select All Sites', 'oneaccess' ) }
 										checked={ selectedSitesToDeleteUser.length === selectedUser?.sites?.length }
 										onChange={ () => {
-											const availableSitesToAddUser = selectedUser?.sites || [];
-											if ( selectedSitesToDeleteUser.length === availableSitesToAddUser.length ) {
+											const availableSitesToDeleteUser = selectedUser?.sites || [];
+											if ( selectedSitesToDeleteUser.length === availableSitesToDeleteUser.length ) {
 												setSelectedSitesToDeleteUser( [] );
 											} else {
 												setSelectedSitesToDeleteUser(
-													availableSitesToAddUser?.map( ( site ) => ( {
+													availableSitesToDeleteUser?.map( ( site ) => ( {
 														site_url: site.site_url,
 														site_name: site.site_name,
 													} ) ),
@@ -860,7 +928,7 @@ const SharedUsers = ( { availableSites } ) => {
 						) : (
 							<Notice status="warning" isDismissible={ false }>
 								<p style={ { margin: 0 } }>
-									{ __( 'This user can not be deleted.', 'oneaccess' ) }
+									{ __( 'This user cannot be deleted.', 'oneaccess' ) }
 								</p>
 							</Notice>
 						) }
@@ -869,7 +937,7 @@ const SharedUsers = ( { availableSites } ) => {
 							<Button
 								variant="secondary"
 								onClick={ () => {
-									setSelectedSitesToDeleteUser( false );
+									setShowUserDeletionModal( false );
 									setSelectedSitesToDeleteUser( [] );
 								} }
 							>
@@ -882,10 +950,8 @@ const SharedUsers = ( { availableSites } ) => {
 								disabled={ selectedSitesToDeleteUser.length === 0 || isDeletingUser }
 								isBusy={ isDeletingUser }
 							>
-								<Icon
-									icon={ trash }
-								/>
-								{ __( 'Delete user', 'oneaccess' ) }
+								<Icon icon={ trash } />
+								{ isDeletingUser ? __( 'Deleting user…', 'oneaccess' ) : __( 'Delete user', 'oneaccess' ) }
 							</Button>
 						</HStack>
 					</VStack>
@@ -907,4 +973,3 @@ const SharedUsers = ( { availableSites } ) => {
 };
 
 export default SharedUsers;
-/* eslint-enable @wordpress/no-unsafe-wp-apis */
