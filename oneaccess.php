@@ -39,7 +39,7 @@ define( 'ONEACCESS_PLUGIN_TEMPLATES_PATH', ONEACCESS_PLUGIN_LOADER_FEATURES_PATH
 if ( ! file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/autoload.php' ) ) {
 	// load template-functions file to use oneaccess_get_template_content function.
 	require_once ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/inc/helpers/template-functions.php';
-	
+
 	echo oneaccess_get_template_content( 'notices/no-assets' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- we are escaping the output in the template file.
 	return;
 }
@@ -49,7 +49,7 @@ require_once ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/autoload.php';
 
 /**
  * Load the plugin.
- * 
+ *
  * @return void
  */
 function oneaccess_plugin_loader(): void {

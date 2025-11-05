@@ -33,7 +33,6 @@ if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 			delete_option( $option );
 		}
 
-		
 		// Remove oneaccess_site_type_transient transient.
 		delete_transient( 'oneaccess_site_type_transient' );
 

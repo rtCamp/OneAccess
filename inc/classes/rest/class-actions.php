@@ -332,7 +332,7 @@ class Actions {
 			trailingslashit( esc_url_raw( $governing_site_url ) ) . 'wp-json/' . self::NAMESPACE . '/add-deduplicated-users',
 			array(
 				'body'    => wp_json_encode( array( 'users' => $users_batch ) ),
-				'headers' => array( 
+				'headers' => array(
 					'Content-Type'      => 'application/json',
 					'X-OneAccess-Token' => get_option( Constants::ONEACCESS_API_KEY, '' ),
 				),

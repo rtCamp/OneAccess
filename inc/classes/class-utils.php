@@ -101,7 +101,7 @@ class Utils {
 
 	/**
 	 * Get all available connected sites.
-	 * 
+	 *
 	 * @return array List of connected site URLs.
 	 */
 	public static function get_connected_sites(): array {
@@ -114,7 +114,7 @@ class Utils {
 
 	/**
 	 * Get current screen object.
-	 * 
+	 *
 	 * @return \WP_Screen|null Current screen object or null if not available.
 	 */
 	public static function get_current_screen(): ?\WP_Screen {

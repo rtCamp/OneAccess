@@ -12,7 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Utils;
-use ParagonIE\Sodium\Core\Util;
 
 /**
  * Validate API key for general request.
@@ -73,16 +72,16 @@ function oneaccess_key_validation( $is_health_check ): bool {
 			if ( $is_updated ) {
 				/**
 				 * Action triggered when governing site is configured for the brand site.
-				 * 
+				 *
 				 * @hook oneaccess_governing_site_configured
 				 */
 				if ( function_exists( 'as_enqueue_async_action' ) ) {
-					as_enqueue_async_action( 
-						'oneaccess_governing_site_configured', 
-						array(), 
-						'oneaccess' 
+					as_enqueue_async_action(
+						'oneaccess_governing_site_configured',
+						array(),
+						'oneaccess'
 					);
-				}           
+				}
 			}
 
 			return true;
@@ -106,14 +105,14 @@ function oneaccess_brand_site_to_governing_site_request_permission_check(): bool
 	// check X-oneaccess-Token header.
 	if ( isset( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) && ! empty( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) ) {
 		$token = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) );
-		
+
 		// check if governing site is set and matches with request origin.
 		$request_origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? untrailingslashit( sanitize_url( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) ) : '';
 		$user_agent     = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : ''; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___SERVER__HTTP_USER_AGENT__ -- this is to know requesting user domain for request which are generated from server.
 
 		// get connected sites.
 		$connected_sites = Utils::get_connected_sites();
-		
+
 		foreach ( $connected_sites as $site ) {
 			$site_url = isset( $site['siteUrl'] ) ? untrailingslashit( esc_url_raw( $site['siteUrl'] ) ) : '';
 
@@ -124,7 +123,7 @@ function oneaccess_brand_site_to_governing_site_request_permission_check(): bool
 					return true;
 				}
 			}
-		}   
+		}
 	}
 
 	return false;

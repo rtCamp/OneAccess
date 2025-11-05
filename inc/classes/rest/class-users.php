@@ -762,12 +762,11 @@ class Users {
 			if ( 201 !== $response_code ) {
 				$error_log[] = array(
 					'site_name' => $site_url['siteUrl'] ?? '',
-					// 'message'   => sprintf(
-					// * translators: %s is the site URL */
-					// __( 'Failed to add user to site %s.', 'oneaccess' ),
-					// esc_html( $site_url['siteUrl'] ?? '' )
-					// ),
-					'response'  => $response,
+					'message'   => sprintf(
+							/* translators: %s is the site URL */
+						__( 'Failed to add user to site %s.', 'oneaccess' ),
+						esc_html( $site_url['siteUrl'] ?? '' )
+					),
 				);
 				continue;
 			}

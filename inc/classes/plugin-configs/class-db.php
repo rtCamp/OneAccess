@@ -442,13 +442,13 @@ class DB {
 	 * @param string $email User email.
 	 * @param string $site_url Site URL to remove from sites_info.
 	 *
-	 * @return int|false|null
+	 * @return int|false
 	 */
-	public static function delete_user_from_deduplicated_users( string $email, string $site_url ): int|false|null {
+	public static function delete_user_from_deduplicated_users( string $email, string $site_url ): int|false {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
 
-		$response = null;
+		$response = false;
 
 		// Get existing user record.
 		$existing_user = $wpdb->get_row(
@@ -508,13 +508,13 @@ class DB {
 	 * @param string $new_role New role to be assigned.
 	 * @param string $site_url Site URL where role needs to be updated.
 	 *
-	 * @return int|false|null
+	 * @return int|false
 	 */
-	public static function update_user_role_in_deduplicated_users( string $email, string $new_role, string $site_url ): int|false|null {
+	public static function update_user_role_in_deduplicated_users( string $email, string $new_role, string $site_url ): int|false {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
 
-		$response = null;
+		$response = false;
 		// Get existing user record.
 		$existing_user = $wpdb->get_row(
 			$wpdb->prepare(
