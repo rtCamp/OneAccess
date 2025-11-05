@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import {
 	Card,
@@ -22,9 +22,16 @@ import {
 	MenuGroup,
 	MenuItem,
 	TextControl,
+	Icon,
 } from '@wordpress/components';
-import { moreVertical, people, plus, Icon, globe, trash } from '@wordpress/icons';
+import { moreVertical, people, plus, globe, trash } from '@wordpress/icons';
 import { decodeEntities } from '@wordpress/html-entities';
+
+/**
+ * Internal dependencies
+ */
+import { checkPasswordStrength } from '../js/utils';
+import PasswordComponent from './Password';
 
 const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
@@ -43,6 +50,14 @@ const SharedUsers = ( { availableSites } ) => {
 	const [ selectedUserRole, setSelectedUserRole ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
 	const [ totalPages, setTotalPages ] = useState( 1 );
+	const [ isDoingUsersCleanup, setIsDoingUsersCleanup ] = useState( false );
+	const [ isCleanupModalOpen, setIsCleanupModalOpen ] = useState( false );
+	const [ isRebuildingDeduplicatedIndex, setIsRebuildingDeduplicatedIndex ] = useState( false );
+	const [ showRebuildIndexModal, setShowRebuildIndexModal ] = useState( false );
+	const [ password, setPassword ] = useState( '' );
+	const [ showPassword, setShowPassword ] = useState( false );
+	const [ passwordStrength, setPasswordStrength ] = useState( '' );
+	const passwordRef = useRef( password );
 
 	// Modal states
 	const [ showManageRolesModal, setShowManageRolesModal ] = useState( false );
@@ -113,10 +128,11 @@ const SharedUsers = ( { availableSites } ) => {
 					// Get the first role from roles array, or handle object structure
 					role: ( () => {
 						if ( Array.isArray( site.roles ) ) {
-							return site.roles[ 0 ];
+							// return all roles as comma separated string and convert to available roles mapping.
+							return site?.roles?.map( ( role ) => AVAILABLE_ROLES[ role ] || role ).join( ', ' );
 						}
 						if ( typeof site.roles === 'object' && site.roles !== null ) {
-							return Object.values( site.roles )[ 0 ];
+							return Object.values( site.roles )?.map( ( role ) => AVAILABLE_ROLES[ role ] || role ).join( ', ' );
 						}
 						return 'subscriber';
 					} )(),
@@ -299,9 +315,9 @@ const SharedUsers = ( { availableSites } ) => {
 					body: JSON.stringify( {
 						username: selectedUser.username,
 						fullName: selectedUser.full_name,
-						password: selectedUser.password,
 						email: selectedUser.email,
 						sites: selectedSitesToAdd,
+						password,
 					} ),
 				},
 			);
@@ -323,6 +339,7 @@ const SharedUsers = ( { availableSites } ) => {
 
 			// Refresh users list
 			await fetchUsers();
+			setPassword( '' );
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -332,7 +349,7 @@ const SharedUsers = ( { availableSites } ) => {
 			setIsAddingToSites( false );
 			setShowAddToSitesModal( false );
 		}
-	}, [ selectedSitesToAdd, fetchUsers, selectedUser ] );
+	}, [ selectedSitesToAdd, fetchUsers, selectedUser, password ] );
 
 	// Handle page change
 	const handlePageChange = ( newPage ) => {
@@ -344,11 +361,175 @@ const SharedUsers = ( { availableSites } ) => {
 		return AVAILABLE_ROLES[ roleValue ] || ( roleValue ?? __( 'No Role', 'oneaccess' ) );
 	};
 
+	const handleUsersCleanup = useCallback( async () => {
+		setIsDoingUsersCleanup( true );
+		try {
+			const response = await fetch(
+				`${ API_NAMESPACE }/cleanup-deduplicated-users`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-WP-Nonce': NONCE,
+					},
+				},
+			);
+
+			if ( ! response.ok ) {
+				setNotice( {
+					type: 'error',
+					message: __( 'Failed to cleanup disconnected sites users.', 'oneaccess' ),
+				} );
+			}
+
+			const data = await response.json();
+
+			if ( ! data.success ) {
+				setNotice( {
+					type: 'error',
+					message: data.message || __( 'Failed to cleanup disconnected sites users.', 'oneaccess' ),
+				} );
+			} else {
+				setNotice( {
+					type: 'success',
+					message: __( 'Disconnected sites users cleanup completed successfully.', 'oneaccess' ),
+				} );
+				// Refresh users list
+				await fetchUsers();
+			}
+		} catch ( error ) {
+			setNotice( {
+				type: 'error',
+				message: __( 'Failed to cleanup disconnected sites users.', 'oneaccess' ),
+			} );
+		} finally {
+			setIsDoingUsersCleanup( false );
+		}
+	}, [ fetchUsers ] );
+
+	const handleRebuildDeduplicatedIndex = useCallback( async () => {
+		setIsRebuildingDeduplicatedIndex( true );
+		try {
+			const response = await fetch(
+				`${ API_NAMESPACE }/rebuild-deduplicated-users-index`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-WP-Nonce': NONCE,
+					},
+				},
+			);
+
+			if ( ! response.ok ) {
+				setNotice( {
+					type: 'error',
+					message: __( 'Failed to rebuild deduplicated users index.', 'oneaccess' ),
+				} );
+			}
+
+			const data = await response.json();
+
+			if ( ! data.success ) {
+				setNotice( {
+					type: 'error',
+					message: data.message || __( 'Failed to rebuild deduplicated users index.', 'oneaccess' ),
+				} );
+			} else {
+				setNotice( {
+					type: 'success',
+					message: __( 'Deduplicated users index rebuilt successfully.', 'oneaccess' ),
+				} );
+			}
+		} catch ( error ) {
+			setNotice( {
+				type: 'error',
+				message: __( 'Failed to rebuild deduplicated users index.', 'oneaccess' ),
+			} );
+		} finally {
+			setIsRebuildingDeduplicatedIndex( false );
+			setShowRebuildIndexModal( false );
+		}
+	}, [] );
+
+	const fetchStrongPassword = useCallback( async () => {
+		try {
+			const response = await fetch(
+				`${ API_NAMESPACE }/generate-strong-password?${ new Date().getTime().toString() }`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-WP-Nonce': NONCE,
+					},
+				},
+			);
+
+			if ( ! response.ok ) {
+				setNotice( {
+					type: 'error',
+					message: __( 'Failed to generate password. Please try again later.', 'oneaccess' ),
+				} );
+				throw new Error( 'Failed to generate password' );
+			}
+			const data = await response.json();
+			if ( ! data.password ) {
+				setNotice( {
+					type: 'error',
+					message: __( 'No password generated. Please try again.', 'oneaccess' ),
+				} );
+				return '';
+			}
+			setNotice( {
+				type: 'success',
+				message: __( 'Password generated successfully.', 'oneaccess' ),
+			} );
+			setPassword( data.password );
+		} catch ( error ) {
+			setNotice( {
+				type: 'error',
+				message: __( 'Failed to generate a password. Please try again later.', 'oneaccess' ),
+			} );
+			return '';
+		}
+	}, [] );
+
+	useEffect( () => {
+		const strength = checkPasswordStrength( password );
+		setPasswordStrength( strength );
+	}, [ password ] );
+
 	return (
 		<>
 			<Card>
 				<CardHeader>
 					<h2>{ __( 'Shared Users', 'oneaccess' ) }</h2>
+					<div
+						className="oneaccess-shared-users-actions"
+						style={ { display: 'flex', gap: '8px' } }
+					>
+						<Button
+							variant="primary"
+							onClick={
+								() => setIsCleanupModalOpen( true )
+							}
+							isBusy={ isDoingUsersCleanup }
+							isDestructive={ true }
+							icon={ trash }
+						>
+							{ __( 'Cleanup Disconnected Sites Users', 'oneaccess' ) }
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={ () => {
+								setShowRebuildIndexModal( true );
+							} }
+							isBusy={ isRebuildingDeduplicatedIndex }
+							icon={ plus }
+						>
+							{ __( 'Rebuild Deduplicated Users Index', 'oneaccess' ) }
+						</Button>
+					</div>
 				</CardHeader>
 				<CardBody>
 					<Grid columns="4" gap="4" style={ { alignItems: 'flex-end' } }>
@@ -409,19 +590,6 @@ const SharedUsers = ( { availableSites } ) => {
 										<p style={ { margin: 0, color: '#6c757d' } }>
 											{ __( 'No users found.', 'oneaccess' ) }
 										</p>
-										{ ( searchTerm || selectedUserRole || selectedSiteFilter ) && (
-											<Button
-												variant="link"
-												onClick={ () => {
-													setSearchTerm( '' );
-													setSelectedUserRole( '' );
-													setSelectedSiteFilter( '' );
-												} }
-												style={ { marginTop: '8px' } }
-											>
-												{ __( 'Clear filters', 'oneaccess' ) }
-											</Button>
-										) }
 									</td>
 								</tr>
 							) }
@@ -523,7 +691,7 @@ const SharedUsers = ( { availableSites } ) => {
 						</tbody>
 					</table>
 
-					{ totalPages > 1 && (
+					{ (
 						<div style={ { marginTop: '16px', display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' } }>
 							<Button
 								variant="secondary"
@@ -598,7 +766,7 @@ const SharedUsers = ( { availableSites } ) => {
 											</div>
 										</div>
 										<SelectControl
-											value={ userRoles[ site.site_url ] || site.role || '' }
+											value={ Object.keys( AVAILABLE_ROLES ).find( ( key ) => AVAILABLE_ROLES[ key ] === site.role ) || userRoles[ site.site_url ] || site.role || '' }
 											options={ [
 												...Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
 													value: role,
@@ -775,6 +943,17 @@ const SharedUsers = ( { availableSites } ) => {
 							</Notice>
 						) }
 
+						{ /* Add password field if user has no password */ }
+						<PasswordComponent
+							password={ password }
+							showPassword={ showPassword }
+							setPassword={ setPassword }
+							passwordRef={ passwordRef }
+							setShowPassword={ setShowPassword }
+							passwordStrength={ passwordStrength }
+							fetchStrongPassword={ fetchStrongPassword }
+						/>
+
 						<HStack justify="flex-end" spacing="3">
 							<Button
 								variant="secondary"
@@ -788,7 +967,7 @@ const SharedUsers = ( { availableSites } ) => {
 							<Button
 								variant="primary"
 								onClick={ handleAddUserToSites }
-								disabled={ selectedSitesToAdd.length === 0 || isAddingToSites }
+								disabled={ selectedSitesToAdd.length === 0 || isAddingToSites || passwordStrength === 'very-weak' || passwordStrength === 'weak' || password === '' }
 								isBusy={ isAddingToSites }
 							>
 								<Icon icon={ plus } />
@@ -956,6 +1135,77 @@ const SharedUsers = ( { availableSites } ) => {
 				</Modal>
 			) }
 
+			{ /* Show cleanup modal confirmation */ }
+			{ isCleanupModalOpen && (
+				<Modal
+					title={ __( 'Confirm Cleanup', 'oneaccess' ) }
+					onRequestClose={ () => setIsCleanupModalOpen( false ) }
+					shouldCloseOnClickOutside={ true }
+					size="medium"
+				>
+					<VStack spacing="4">
+						<p style={ { color: '#6c757d', fontSize: '14px' } }>
+							{ __( 'Are you sure you want to cleanup users associated with disconnected sites? This action cannot be undone.', 'oneaccess' ) }
+						</p>
+						<HStack justify="flex-end" spacing="3">
+							<Button
+								variant="secondary"
+								onClick={ () => setIsCleanupModalOpen( false ) }
+							>
+								{ __( 'Cancel', 'oneaccess' ) }
+							</Button>
+							<Button
+								variant="primary"
+								isDestructive
+								onClick={ () => {
+									handleUsersCleanup();
+									setIsCleanupModalOpen( false );
+								} }
+								isBusy={ isDoingUsersCleanup }
+								icon={ trash }
+							>
+								{ __( 'Confirm Cleanup', 'oneaccess' ) }
+							</Button>
+						</HStack>
+					</VStack>
+				</Modal>
+			) }
+
+			{ /* Rebuild Deduplicated Users Index Modal */ }
+			{ showRebuildIndexModal && (
+				<Modal
+					title={ __( 'Rebuild Deduplicated Users Index', 'oneaccess' ) }
+					onRequestClose={ () => setShowRebuildIndexModal( false ) }
+					shouldCloseOnClickOutside={ true }
+					size="medium"
+				>
+					<VStack spacing="4">
+						<p style={ { color: '#6c757d', fontSize: '14px' } }>
+							{ __( 'Rebuilding the deduplicated users index is async process that may take some time to complete depending on the number of users in your network. Are you sure you want to proceed?', 'oneaccess' ) }
+						</p>
+						<HStack justify="flex-end" spacing="3">
+							<Button
+								variant="secondary"
+								onClick={ () => setShowRebuildIndexModal( false ) }
+							>
+								{ __( 'Cancel', 'oneaccess' ) }
+							</Button>
+							<Button
+								variant="primary"
+								onClick={ () => {
+									handleRebuildDeduplicatedIndex();
+								} }
+								isBusy={ isRebuildingDeduplicatedIndex }
+								icon={ plus }
+							>
+								{ __( 'Rebuild Index', 'oneaccess' ) }
+							</Button>
+						</HStack>
+					</VStack>
+				</Modal>
+			) }
+
+			{ /* Notice Snackbar */ }
 			{ notice.message && (
 				<Snackbar
 					isDismissible
