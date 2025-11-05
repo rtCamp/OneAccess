@@ -92,7 +92,7 @@ class Users {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_users' ),
-					'permission_callback' => '__return_true', // TODO -- add proper validation.
+					'permission_callback' => array( Basic_Options::class, 'check_user_permissions' ),
 					'args'                => array(
 						'paged'        => array(
 							'required'          => false,
