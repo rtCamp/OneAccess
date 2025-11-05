@@ -706,7 +706,7 @@ const SharedUsers = ( { availableSites } ) => {
 										/* translators: 1: Current page number. 2: Total pages. */
 										__( 'Page %1$s of %2$s', 'oneaccess' ),
 										page,
-										totalPages,
+										totalPages === 0 ? 1 : totalPages,
 									)
 								}
 							</div>

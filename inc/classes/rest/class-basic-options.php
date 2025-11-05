@@ -242,9 +242,6 @@ class Basic_Options {
 
 		update_option( Constants::ONEACCESS_SITE_TYPE, $site_type, false );
 
-		// set transient to indicating that site type has been set for infinite time.
-		set_transient( Constants::ONEACCESS_SITE_TYPE_TRANSIENT, true, 0 );
-
 		// Create user roles based on site type.
 		User_Roles::create_brand_admin_role();
 		User_Roles::create_network_admin_role();

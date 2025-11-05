@@ -111,4 +111,20 @@ class Utils {
 		}
 		return array();
 	}
+
+	/**
+	 * Get current screen object.
+	 * 
+	 * @return \WP_Screen|null Current screen object or null if not available.
+	 */
+	public static function get_current_screen(): ?\WP_Screen {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return null;
+		}
+		$screen = get_current_screen();
+		if ( is_a( $screen, '\WP_Screen' ) ) {
+			return $screen;
+		}
+		return null;
+	}
 }

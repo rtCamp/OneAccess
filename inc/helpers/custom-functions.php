@@ -72,12 +72,17 @@ function oneaccess_key_validation( $is_health_check ): bool {
 
 			if ( $is_updated ) {
 				/**
-				 * Action hook fired after governing site url is set.
-				 *
+				 * Action triggered when governing site is configured for the brand site.
+				 * 
 				 * @hook oneaccess_governing_site_configured
 				 */
-				do_action( 'oneaccess_governing_site_configured' );
-
+				if ( function_exists( 'as_enqueue_async_action' ) ) {
+					as_enqueue_async_action( 
+						'oneaccess_governing_site_configured', 
+						array(), 
+						'oneaccess' 
+					);
+				}           
 			}
 
 			return true;

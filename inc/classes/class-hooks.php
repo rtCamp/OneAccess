@@ -54,7 +54,7 @@ class Hooks {
 	 * @return string
 	 */
 	public function add_body_class_for_modal( $classes ): string {
-		$current_screen = get_current_screen();
+		$current_screen = Utils::get_current_screen();
 		if ( ! $current_screen || 'plugins' !== $current_screen->base ) {
 			return $classes;
 		}
@@ -74,7 +74,7 @@ class Hooks {
 	 * @return void
 	 */
 	public function add_site_selection_modal(): void {
-		$current_screen = get_current_screen();
+		$current_screen = Utils::get_current_screen();
 		if ( ! $current_screen || 'plugins' !== $current_screen->base ) {
 			return;
 		}
@@ -149,7 +149,7 @@ class Hooks {
 	 * @return string
 	 */
 	public function add_body_class_for_missing_sites( $classes ): string {
-		$current_screen = get_current_screen();
+		$current_screen = Utils::get_current_screen();
 
 		if ( ! $current_screen ) {
 			return $classes;
