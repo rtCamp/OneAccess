@@ -21,7 +21,7 @@ import {
 	SnackbarList,
 	Icon,
 } from '@wordpress/components';
-import { isValidEmail } from '../js/utils';
+import { isValidEmail, checkPasswordStrength, strengthWidths, getStrengthColor } from '../js/utils';
 
 const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
@@ -44,28 +44,6 @@ const CreateUser = ( { availableSites } ) => {
 	const [ showPassword, setShowPassword ] = useState( false );
 	const [ passwordStrength, setPasswordStrength ] = useState( '' );
 	const [ userCreationNotices, setUserCreationNotices ] = useState( [] );
-
-	const checkPasswordStrength = ( password ) => {
-		let strength = 'weak';
-		if ( password.length >= 12 && /[A-Z]/.test( password ) && /[0-9]/.test( password ) && /[^A-Za-z0-9]/.test( password ) ) {
-			strength = 'strong';
-		} else if ( password.length >= 8 && /[A-Z]/.test( password ) && /[a-z]/.test( password ) && /[0-9]/.test( password ) ) {
-			strength = 'medium';
-		} else if ( password.length >= 8 ) {
-			strength = 'weak';
-		} else if ( password.length > 0 ) {
-			strength = 'very-weak';
-		}
-		return strength;
-	};
-
-	const strengthWidths = {
-		'very-weak': '25%',
-		weak: '50%',
-		medium: '75%',
-		strong: '100%',
-		default: '0%',
-	};
 
 	const fetchStrongPassword = useCallback( async () => {
 		setUserCreationNotices( [] );
@@ -199,21 +177,6 @@ const CreateUser = ( { availableSites } ) => {
 		}
 	}, [ userFormData, selectedSites ] );
 
-	const getStrengthColor = () => {
-		switch ( passwordStrength ) {
-			case 'very-weak':
-				return '#dc3545';
-			case 'weak':
-				return '#ff6b6b';
-			case 'medium':
-				return '#ffc107';
-			case 'strong':
-				return '#28a745';
-			default:
-				return '#e1e5e9';
-		}
-	};
-
 	return (
 		<>
 			<Card>
@@ -285,7 +248,7 @@ const CreateUser = ( { availableSites } ) => {
 									variant="secondary"
 								>
 									<Icon
-										icon={ showPassword ? 'hidden' : 'visibility' }
+										icon={ showPassword ? 'visibility' : 'hidden' }
 										size={ 20 }
 									/>
 								</Button>
@@ -294,7 +257,7 @@ const CreateUser = ( { availableSites } ) => {
 								<div style={ { marginBottom: '12px' } }>
 									<div style={ { fontSize: '12px', color: '#6c757d' } }>
 										{ __( 'Password Strength:', 'oneaccess' ) }{ ' ' }
-										<span style={ { color: getStrengthColor(), fontWeight: '500' } }>
+										<span style={ { color: getStrengthColor( passwordStrength ), fontWeight: '500' } }>
 											{ passwordStrength
 												? passwordStrength.replace( '-', ' ' ).toUpperCase()
 												: '' }
@@ -313,7 +276,7 @@ const CreateUser = ( { availableSites } ) => {
 											style={ {
 												height: '100%',
 												width: strengthWidths[ passwordStrength ] || strengthWidths.default,
-												backgroundColor: getStrengthColor(),
+												backgroundColor: getStrengthColor( passwordStrength ),
 												transition: 'width 0.3s ease-in-out',
 											} }
 										/>
