@@ -76,7 +76,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'add_deduplicated_users' ),
-				'permission_callback' => array( $this, 'check_api_permission' ),
+				'permission_callback' => 'oneaccess_brand_site_to_governing_site_request_permission_check',
 				'args'                => array(
 					'users' => array(
 						'required'          => true,
@@ -97,7 +97,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'send_users_for_deduplication' ),
-				'permission_callback' => array( $this, 'check_api_permission' ),
+				'permission_callback' => 'oneaccess_validate_api_key',
 			)
 		);
 
@@ -140,7 +140,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_profile_requests' ),
-				'permission_callback' => array( $this, 'check_api_permission' ),
+				'permission_callback' => array( Basic_Options::class, 'check_user_permissions' ),
 				'args'                => $profile_request_args,
 			)
 		);
@@ -154,23 +154,49 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_brand_site_profile_requests' ),
-				'permission_callback' => array( $this, 'check_api_permission' ),
+				'permission_callback' => 'oneaccess_validate_api_key',
 				'args'                => $profile_request_args,
 			)
 		);
-	}
 
-	/**
-	 * Check API permission
-	 * TODO: Implement proper authentication
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return bool
-	 */
-	public function check_api_permission( WP_REST_Request $request ): bool {
-		// TODO: Implement proper API key validation
-		// For now, check for basic authentication or API key header
-		return true; // Replace with actual permission check
+		/**
+		 * Route to clean up disconnected sites users from deduplicated users table
+		 */
+		register_rest_route(
+			self::NAMESPACE,
+			'/cleanup-deduplicated-users',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'cleanup_deduplicated_users' ),
+				'permission_callback' => array( Basic_Options::class, 'check_user_permissions' ),
+			),
+		);
+
+		/**
+		 * Route to rebuild deduplicated users index
+		 */
+		register_rest_route(
+			self::NAMESPACE,
+			'/rebuild-deduplicated-users-index',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'rebuild_deduplicated_users_index' ),
+				'permission_callback' => array( Basic_Options::class, 'check_user_permissions' ),
+			),
+		);
+
+		/**
+		 * Route to rebuild index for brand sites
+		 */
+		register_rest_route(
+			self::NAMESPACE,
+			'/rebuild-brand-sites-index',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'rebuild_brand_sites_index' ),
+				'permission_callback' => 'oneaccess_validate_api_key',
+			),
+		);
 	}
 
 	/**
@@ -306,7 +332,10 @@ class Actions {
 			trailingslashit( esc_url_raw( $governing_site_url ) ) . 'wp-json/' . self::NAMESPACE . '/add-deduplicated-users',
 			array(
 				'body'    => wp_json_encode( array( 'users' => $users_batch ) ),
-				'headers' => array( 'Content-Type' => 'application/json' ),
+				'headers' => array( 
+					'Content-Type'      => 'application/json',
+					'X-OneAccess-Token' => get_option( Constants::ONEACCESS_API_KEY, '' ),
+				),
 				'timeout' => 30,
 			)
 		);
@@ -327,6 +356,7 @@ class Actions {
 		$governing_site_url = Utils::get_governing_site_url();
 		$total_users_sent   = 0;
 		$errors             = array();
+		$responses          = array();
 
 		while ( true ) {
 			$user_query = new \WP_User_Query(
@@ -355,11 +385,11 @@ class Actions {
 					'error' => $response->get_error_message(),
 				);
 			} else {
-				$governing_site_responses[] = array(
+				$responses[]       = array(
 					'batch' => $paged,
 					'code'  => wp_remote_retrieve_response_code( $response ),
 				);
-				$total_users_sent          += count( $users_batch );
+				$total_users_sent += count( $users_batch );
 			}
 
 			// Reset batch for next iteration.
@@ -374,6 +404,7 @@ class Actions {
 				'total_batches_sent' => $paged - 1,
 				'batch_size'         => self::BATCH_SIZE,
 				'errors'             => $errors,
+				'responses'          => $responses,
 			),
 			empty( $errors ) ? 200 : 207 // 207 Multi-Status if there are errors.
 		);
@@ -767,5 +798,225 @@ class Actions {
 
 		$governing_site_url = Utils::get_governing_site_url();
 		$this->send_users_batch( array( $user_data ), $governing_site_url );
+	}
+
+	/**
+	 * Cleanup deduplicated users from disconnected sites.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function cleanup_deduplicated_users(): WP_REST_Response {
+		global $wpdb;
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+
+		// Get global oneaccess_sites variable.
+		$oneaccess_sites     = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites     = array();
+		$connected_site_urls = array();
+
+		// Build list of connected site URLs.
+		foreach ( $oneaccess_sites as $site_config ) {
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_config['siteUrl'] ) || in_array( $site_config['siteUrl'], $processed_sites, true ) ) {
+				if ( ! empty( $site_config['siteUrl'] ) ) {
+					$processed_sites[] = $site_config['siteUrl'];
+				}
+				continue;
+			}
+
+			if ( ! empty( $site_config['siteUrl'] ) ) {
+				$connected_site_urls[] = trailingslashit( esc_url_raw( $site_config['siteUrl'] ) );
+			}
+		}
+
+		// If no connected sites, we can't proceed safely.
+		if ( empty( $connected_site_urls ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'No connected sites found in global configuration.', 'oneaccess' ),
+				),
+				400
+			);
+		}
+
+		// Batch processing configuration.
+		$batch_size    = 100; // Process 100 users at a time.
+		$offset        = 0;
+		$total_updated = 0;
+		$total_deleted = 0;
+
+		do {
+			// Get batch of users.
+			$users = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, sites_info FROM {$table_name} ORDER BY id LIMIT %d OFFSET %d",
+					$batch_size,
+					$offset
+				),
+				ARRAY_A
+			);
+
+			if ( empty( $users ) ) {
+				break;
+			}
+
+			$updated_count = 0;
+			$deleted_count = 0;
+
+			foreach ( $users as $user ) {
+				$user_id    = $user['id'];
+				$sites_info = json_decode( $user['sites_info'], true );
+
+				if ( ! is_array( $sites_info ) ) {
+					continue;
+				}
+
+				// Filter sites_info to keep only connected sites.
+				$filtered_sites = array_filter(
+					$sites_info,
+					function ( $site ) use ( $connected_site_urls ): bool {
+						$site_url = trailingslashit( $site['site_url'] ?? '' );
+						return in_array( $site_url, $connected_site_urls, true );
+					}
+				);
+
+				// Re-index array to avoid gaps in JSON array.
+				$filtered_sites = array_values( $filtered_sites );
+
+				// If no sites remain, delete the user row.
+				if ( empty( $filtered_sites ) ) {
+					$wpdb->delete(
+						$table_name,
+						array( 'id' => $user_id ),
+						array( '%d' )
+					);
+					++$deleted_count;
+				} elseif ( count( $filtered_sites ) !== count( $sites_info ) ) {
+					// Sites were removed, update the row.
+					$wpdb->update(
+						$table_name,
+						array(
+							'sites_info' => wp_json_encode( $filtered_sites ),
+							'updated_at' => current_time( 'mysql' ),
+						),
+						array( 'id' => $user_id ),
+						array( '%s', '%s' ),
+						array( '%d' )
+					);
+					++$updated_count;
+				}
+			}
+
+			$total_updated += $updated_count;
+			$total_deleted += $deleted_count;
+			$offset        += $batch_size;
+
+			// Optional: Add a small delay to prevent overwhelming the database.
+			usleep( 100000 ); // 0.1 seconds.
+
+			// count of users processed in this batch.
+			$users_processed = count( $users );
+
+		} while ( $users_processed === $batch_size );
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Cleanup completed successfully.', 'oneaccess' ),
+				'data'    => array(
+					'users_updated'     => $total_updated,
+					'users_deleted'     => $total_deleted,
+					'connected_sites'   => count( $connected_site_urls ),
+					'batches_processed' => ceil( $offset / $batch_size ),
+				),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Rebuild deduplicated users index.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function rebuild_deduplicated_users_index(): WP_REST_Response {
+
+		// get oneaccess_sites from global variable.
+		$oneaccess_sites = $GLOBALS['oneaccess_sites'] ?? array();
+
+		// for each site fire action to rebuild index.
+		$results   = array();
+		$error_log = array();
+
+		foreach ( $oneaccess_sites as $site_config ) {
+			$site_url = $site_config['siteUrl'] ?? '';
+			$api_key  = $site_config['apiKey'] ?? '';
+
+			if ( empty( $site_url ) ) {
+				continue;
+			}
+
+			// Make remote request to rebuild index.
+			$response = wp_safe_remote_post(
+				trailingslashit( esc_url_raw( $site_url ) ) . 'wp-json/' . self::NAMESPACE . '/rebuild-brand-sites-index',
+				array(
+					'headers' => array(
+						'X-OneAccess-Token' => $api_key,
+					),
+					'timeout' => 30,
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				$error_log[] = $response;
+				continue;
+			}
+
+			$response_code = wp_remote_retrieve_response_code( $response );
+
+			if ( 200 !== $response_code ) {
+				$error_log[] = new WP_Error(
+					'invalid_response',
+					sprintf( 'Site %s returned status code %d', $site_url, $response_code ),
+					array( 'status' => $response_code )
+				);
+				continue;
+			}
+
+			$results[] = array(
+				'site_url' => $site_url,
+				'status'   => __( 'Rebuild initiated', 'oneaccess' ),
+			);
+
+		}
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'results' => $results,
+				'errors'  => $error_log,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Rebuild brand sites index on current site.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function rebuild_brand_sites_index(): WP_REST_Response {
+
+		// Trigger action to rebuild brand sites index.
+		do_action( 'oneaccess_governing_site_configured' );
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Brand sites index rebuild initiated successfully.', 'oneaccess' ),
+			),
+			200
+		);
 	}
 }
