@@ -131,7 +131,7 @@ class DB {
 
 				$site_exists = false;
 				foreach ( $existing_sites_info as $site_info ) {
-					if ( $site_info['site_url'] === $new_site_info['site_url'] ) {
+					if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $new_site_info['site_url'] ) ) {
 						$site_exists = true;
 						break;
 					}
@@ -157,7 +157,7 @@ class DB {
 				} else {
 					// update site_info with latest information.
 					foreach ( $existing_sites_info as $site_info ) {
-						if ( $site_info['site_url'] === $new_site_info['site_url'] ) {
+						if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $new_site_info['site_url'] ) ) {
 							$site_info['site_name'] = $new_site_info['site_name'];
 							$site_info['user_id']   = $new_site_info['user_id'];
 							$site_info['roles']     = $new_site_info['roles'];
@@ -434,5 +434,126 @@ class DB {
 			),
 			array( '%d' )
 		);
+	}
+
+	/**
+	 * Delete user from deduplicated users table.
+	 *
+	 * @param string $email User email.
+	 * @param string $site_url Site URL to remove from sites_info.
+	 *
+	 * @return int|false|null
+	 */
+	public static function delete_user_from_deduplicated_users( string $email, string $site_url ): int|false|null {
+		global $wpdb;
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+
+		$response = null;
+
+		// Get existing user record.
+		$existing_user = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM $table_name WHERE email = %s",
+				$email
+			)
+		);
+
+		if ( $existing_user ) {
+			// Decode existing sites_info.
+			$existing_sites_info = json_decode( $existing_user->sites_info, true );
+			if ( ! is_array( $existing_sites_info ) ) {
+				$existing_sites_info = array();
+			}
+
+			// Filter out the site info to be removed.
+			$updated_sites_info = array_filter(
+				$existing_sites_info,
+				function ( $site_info ) use ( $site_url ) {
+					return trailingslashit( $site_info['site_url'] ) !== trailingslashit( $site_url );
+				}
+			);
+
+			if ( empty( $updated_sites_info ) ) {
+				// If no sites left, delete the user record.
+				$response = $wpdb->delete(
+					$table_name,
+					array( 'id' => $existing_user->id ),
+					array( '%d' )
+				);
+			} else {
+				// Update the user record with updated sites_info.
+				$response = $wpdb->update(
+					$table_name,
+					array(
+						'sites_info' => wp_json_encode( array_values( $updated_sites_info ) ),
+						'updated_at' => current_time( 'mysql' ),
+					),
+					array( 'id' => $existing_user->id ),
+					array(
+						'%s',
+						'%s',
+					),
+					array( '%d' )
+				);
+			}
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Update user role in deduplicated users table.
+	 *
+	 * @param string $email User email.
+	 * @param string $new_role New role to be assigned.
+	 * @param string $site_url Site URL where role needs to be updated.
+	 *
+	 * @return int|false|null
+	 */
+	public static function update_user_role_in_deduplicated_users( string $email, string $new_role, string $site_url ): int|false|null {
+		global $wpdb;
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+
+		$response = null;
+		// Get existing user record.
+		$existing_user = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM $table_name WHERE email = %s",
+				$email
+			)
+		);
+
+		if ( $existing_user ) {
+			// Decode existing sites_info.
+			$existing_sites_info = json_decode( $existing_user->sites_info, true );
+			if ( ! is_array( $existing_sites_info ) ) {
+				$existing_sites_info = array();
+			}
+
+			// Update the role for the specified site.
+			foreach ( $existing_sites_info as &$site_info ) {
+				if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $site_url ) ) {
+					$site_info['roles'] = array( $new_role );
+					break;
+				}
+			}
+
+			// Update the user record with updated sites_info.
+			$response = $wpdb->update(
+				$table_name,
+				array(
+					'sites_info' => wp_json_encode( $existing_sites_info ),
+					'updated_at' => current_time( 'mysql' ),
+				),
+				array( 'id' => $existing_user->id ),
+				array(
+					'%s',
+					'%s',
+				),
+				array( '%d' )
+			);
+		}
+
+		return $response;
 	}
 }
