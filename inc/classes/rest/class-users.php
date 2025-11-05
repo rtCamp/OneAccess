@@ -451,6 +451,7 @@ class Users {
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
 		$error_log            = array();
+		$user_delete_results  = array();
 
 		foreach ( $sites as $site ) {
 			$request_url = $site['site_url'] . '/wp-json/' . self::NAMESPACE . '/delete-user';
@@ -508,6 +509,9 @@ class Users {
 				'site'    => $site['site_url'],
 				'message' => $response_body['message'] ?? __( 'User deleted successfully.', 'oneaccess' ),
 			);
+
+			// delete from deduplicated users table.
+			$user_delete_results[] = DB::delete_user_from_deduplicated_users( $email, $site['site_url'] );
 		}
 
 		return new \WP_REST_Response(
@@ -515,11 +519,12 @@ class Users {
 				'success' => count( $error_log ) === 0,
 				'message' => __( 'User deleted from sites successfully.', 'oneaccess' ),
 				'data'    => array(
-					'email'         => $email,
-					'username'      => $username,
-					'sites'         => $sites,
-					'response_data' => $response_data,
-					'error_log'     => $error_log,
+					'email'               => $email,
+					'username'            => $username,
+					'sites'               => $sites,
+					'response_data'       => $response_data,
+					'error_log'           => $error_log,
+					'user_delete_results' => $user_delete_results,
 				),
 			),
 			200
@@ -757,11 +762,12 @@ class Users {
 			if ( 201 !== $response_code ) {
 				$error_log[] = array(
 					'site_name' => $site_url['siteUrl'] ?? '',
-					'message'   => sprintf(
-						/* translators: %s is the site URL */
-						__( 'Failed to add user to site %s.', 'oneaccess' ),
-						esc_html( $site_url['siteUrl'] ?? '' )
-					),
+					// 'message'   => sprintf(
+					// * translators: %s is the site URL */
+					// __( 'Failed to add user to site %s.', 'oneaccess' ),
+					// esc_html( $site_url['siteUrl'] ?? '' )
+					// ),
+					'response'  => $response,
 				);
 				continue;
 			}
@@ -881,6 +887,7 @@ class Users {
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
 		$error_log            = array();
+		$db_results           = array();
 
 		foreach ( $roles as $key => $value ) {
 			$site_url = $oneaccess_sites_info[ $key ]['siteUrl'] ?? '';
@@ -945,6 +952,10 @@ class Users {
 				'status'  => 'success',
 				'message' => __( 'User role updated successfully.', 'oneaccess' ),
 			);
+
+			// update role in deduplicated users table.
+			$db_results[] = DB::update_user_role_in_deduplicated_users( $email, $new_role, $site_url );
+
 		}
 
 		return new \WP_REST_Response(
@@ -957,6 +968,7 @@ class Users {
 					'roles'         => $roles,
 					'response_data' => $response_data,
 					'error_log'     => $error_log,
+					'db_results'    => $db_results,
 				),
 			),
 			200
@@ -1093,8 +1105,9 @@ class Users {
 
 		// Search query - search in email, first_name, last_name.
 		if ( ! empty( $search_query ) ) {
-			$where_conditions[] = '(email LIKE %s OR first_name LIKE %s OR last_name LIKE %s)';
+			$where_conditions[] = '(email LIKE %s OR first_name LIKE %s OR last_name LIKE %s OR CONCAT(first_name, " ", last_name) LIKE %s)';
 			$search_like        = '%' . $wpdb->esc_like( $search_query ) . '%';
+			$prepare_values[]   = $search_like;
 			$prepare_values[]   = $search_like;
 			$prepare_values[]   = $search_like;
 			$prepare_values[]   = $search_like;
