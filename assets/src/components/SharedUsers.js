@@ -15,10 +15,10 @@ import {
 	DropdownMenu,
 	CheckboxControl,
 	Notice,
-	__experimentalVStack as VStack,
-	__experimentalHStack as HStack,
+	__experimentalVStack as VStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalHStack as HStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalGrid as Grid, // eslint-disable-line @wordpress/no-unsafe-wp-apis
 	Dashicon,
-	__experimentalGrid as Grid,
 	MenuGroup,
 	MenuItem,
 	TextControl,
@@ -43,7 +43,6 @@ const SharedUsers = ( { availableSites } ) => {
 	const [ selectedUserRole, setSelectedUserRole ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
 	const [ totalPages, setTotalPages ] = useState( 1 );
-	const [ _, setTotalUsers ] = useState( 0 );
 
 	// Modal states
 	const [ showManageRolesModal, setShowManageRolesModal ] = useState( false );
@@ -132,7 +131,6 @@ const SharedUsers = ( { availableSites } ) => {
 			} ) );
 
 			setUsers( transformedUsers );
-			setTotalUsers( data.pagination.total_users );
 			setTotalPages( data.pagination.total_pages );
 		} catch ( error ) {
 			setNotice( {

@@ -46,20 +46,6 @@ class Brand_Site {
 	 * Register REST API routes.
 	 */
 	public function register_routes(): void {
-		/**
-		 * Register a route to get users profile request data.
-		 */
-		register_rest_route(
-			self::NAMESPACE,
-			'/profile-requests',
-			array(
-				array(
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_profile_requests' ),
-					'permission_callback' => 'oneaccess_validate_api_key',
-				),
-			)
-		);
 
 		/**
 		 * Register a route to get user profile request data across all brand sites.
@@ -263,24 +249,6 @@ class Brand_Site {
 				'success' => true,
 				'message' => __( 'Profile request approved successfully.', 'oneaccess' ),
 				'user_id' => $user_id,
-			),
-			200
-		);
-	}
-
-	/**
-	 * Get users profile request data.
-	 *
-	 * @return \WP_REST_Response
-	 */
-	public function get_profile_requests(): \WP_REST_Response {
-		// Get users profile request data.
-		$profile_requests_data = Utils::get_users_profile_request_data();
-
-		return new \WP_REST_Response(
-			array(
-				'success' => true,
-				'data'    => $profile_requests_data,
 			),
 			200
 		);

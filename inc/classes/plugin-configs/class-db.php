@@ -90,7 +90,7 @@ class DB {
 	/**
 	 * Add deduplicated users to the database.
 	 *
-	 * @param array $users_data Users data to be added.
+	 * @param array $user_data Users data to be added.
 	 *
 	 * @return void
 	 */
@@ -434,110 +434,5 @@ class DB {
 			),
 			array( '%d' )
 		);
-	}
-
-	/**
-	 * Insert or update deduplicated user record.
-	 *
-	 * @param int|string $user_id User ID.
-	 * @param string     $fullname Full name of the user.
-	 * @param array      $sites_info Sites information array.
-	 *
-	 * @return int|false|null
-	 */
-	public static function insert_or_update_deduplicated_user( string $user_email, string $fullname, array $site_info ): int|false|null {
-		global $wpdb;
-		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
-
-		$result = null;
-
-		// Sanitize inputs (basic validation)
-		$user_email = sanitize_email( $user_email );
-		if ( ! is_email( $user_email ) ) {
-			return false;
-		}
-		$fullname = sanitize_text_field( $fullname );
-
-		// split fullname into first and last name.
-		$first_name = '';
-		$last_name  = '';
-		$name_parts = explode( ' ', $fullname, 2 );
-		if ( count( $name_parts ) === 2 ) {
-			$first_name = sanitize_text_field( $name_parts[0] );
-			$last_name  = sanitize_text_field( $name_parts[1] );
-		} else {
-			$first_name = $fullname;
-		}
-
-		// Ensure $site_info is a single site entry (assoc array)
-		if ( ! isset( $site_info['user_id'] ) || ! isset( $site_info['site_url'] ) || ! isset( $site_info['site_name'] ) || ! isset( $site_info['roles'] ) ) {
-			return false; // Invalid site_info structure
-		}
-
-		// check if user with same email already exists.
-		$existing_user = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE email = %s",
-				$user_email
-			),
-			ARRAY_A
-		);
-
-		$current_time = current_time( 'mysql' );
-
-		if ( $existing_user ) {
-			// Decode existing sites_info (always an array)
-			$existing_sites = json_decode( $existing_user['sites_info'], true ) ?: array();
-
-			// Check if this exact site/user_id combo already exists (to avoid duplicates)
-			$site_exists = false;
-			foreach ( $existing_sites as $existing_site ) {
-				if ( isset( $existing_site['user_id'] ) && $existing_site['user_id'] == $site_info['user_id'] &&
-				isset( $existing_site['site_url'] ) && $existing_site['site_url'] == $site_info['site_url'] ) {
-					$site_exists = true;
-					break;
-				}
-			}
-
-			if ( ! $site_exists ) {
-				// Append new site to array
-				$existing_sites[] = $site_info;
-			}
-
-			// Re-encode as array
-			$sites_info_json = wp_json_encode( $existing_sites );
-
-			// Always update (names or new site)
-			$result = $wpdb->update(
-				$table_name,
-				array(
-					'first_name' => $first_name,
-					'last_name'  => $last_name,
-					'sites_info' => $sites_info_json,
-					'updated_at' => $current_time,
-				),
-				array( 'email' => $user_email ),
-				array( '%s', '%s', '%s', '%s' ),
-				array( '%s' )
-			);
-		} else {
-			// Insert new record: Wrap single site_info in array
-			$sites_info_json = wp_json_encode( array( $site_info ) );
-
-			$result = $wpdb->insert(
-				$table_name,
-				array(
-					'email'      => $user_email,
-					'first_name' => $first_name,
-					'last_name'  => $last_name,
-					'sites_info' => $sites_info_json,
-					'created_at' => $current_time,
-					'updated_at' => $current_time,
-				),
-				array( '%s', '%s', '%s', '%s', '%s', '%s' )
-			);
-		}
-
-		return $result;
 	}
 }

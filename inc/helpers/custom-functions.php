@@ -5,42 +5,13 @@
  * @package oneaccess
  */
 
+// if accessed directly, exit.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Utils;
-
-/**
- * Get plugin template.
- *
- * @param string $template  Name or path of the template within /templates folder without php extension.
- * @param array  $variables pass an array of variables you want to use in template.
- * @param bool   $is_echo      Whether to echo out the template content or not.
- *
- * @return string|void Template markup.
- */
-function oneaccess_features_template( $template, $variables = array(), $is_echo = false ) {
-
-	$template_file = sprintf( '%1$s/templates/%2$s.php', ONEACCESS_PLUGIN_LOADER_FEATURES_PATH, $template );
-
-	if ( ! file_exists( $template_file ) ) {
-		return '';
-	}
-
-	if ( ! empty( $variables ) && is_array( $variables ) ) {
-		extract( $variables, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- Used as an exception as there is no better alternative.
-	}
-
-	ob_start();
-
-	include $template_file; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
-
-	$markup = ob_get_clean();
-
-	if ( ! $is_echo ) {
-		return $markup;
-	}
-
-	echo $markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output escaped already in template.
-}
 
 /**
  * Validate API key for general request.
@@ -96,7 +67,18 @@ function oneaccess_key_validation( $is_health_check ): bool {
 
 		// if token is valid and request is from different domain then save it as governing site.
 		if ( Utils::is_brand_site() && ! $is_same_domain && $is_token_valid && empty( $governing_site_url ) && $is_health_check ) {
-			update_option( Constants::ONEACCESS_GOVERNING_SITE_URL, $request_origin, false );
+			$is_updated = update_option( Constants::ONEACCESS_GOVERNING_SITE_URL, $request_origin, false );
+
+			if ( $is_updated ) {
+				/**
+				 * Action hook fired after governing site url is set.
+				 *
+				 * @hook oneaccess_governing_site_configured
+				 */
+				do_action( 'oneaccess_governing_site_configured' );
+
+			}
+
 			return true;
 		}
 

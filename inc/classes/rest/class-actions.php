@@ -9,6 +9,7 @@ namespace OneAccess\REST;
 
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Traits\Singleton;
+use OneAccess\Utils;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -66,7 +67,9 @@ class Actions {
 	 * @return void
 	 */
 	public function register_routes(): void {
-		// Route to add users to oneaccess_deduplicated_users table
+		/**
+		 * Route to add users to oneaccess_deduplicated_users table.
+		 */
 		register_rest_route(
 			self::NAMESPACE,
 			'/add-deduplicated-users',
@@ -85,7 +88,9 @@ class Actions {
 			)
 		);
 
-		// Route to send users in batch for deduplication
+		/**
+		 * Route to send users in batch for deduplication.
+		 */
 		register_rest_route(
 			self::NAMESPACE,
 			'/send-users-for-deduplication',
@@ -96,7 +101,9 @@ class Actions {
 			)
 		);
 
-		// Shared args for profile requests endpoints
+		/**
+		 * Shared args for profile requests endpoints.
+		 */
 		$profile_request_args = array(
 			'site'         => array(
 				'required'          => false,
@@ -124,7 +131,9 @@ class Actions {
 			),
 		);
 
-		// Route to get aggregated profile requests from all brand sites
+		/**
+		 * Route to get aggregated profile requests from all brand sites
+		 */
 		register_rest_route(
 			self::NAMESPACE,
 			'/get-profile-requests',
@@ -136,7 +145,9 @@ class Actions {
 			)
 		);
 
-		// Route to get profile requests from current brand site
+		/**
+		 * Route to get profile requests from current brand site.
+		 */
 		register_rest_route(
 			self::NAMESPACE,
 			'/get-brand-site-profile-requests',
@@ -186,15 +197,17 @@ class Actions {
 	 * Sanitize user data
 	 *
 	 * @param array $user Raw user data.
+	 *
 	 * @return array|null Sanitized user data or null if invalid.
 	 */
 	private function sanitize_user_data( array $user ): ?array {
-		// Skip invalid users
+
+		// Skip invalid users.
 		if ( empty( $user['email'] ) ) {
 			return null;
 		}
 
-		// Get roles with proper null checking
+		// Get roles with proper null checking.
 		$user_roles = array();
 		if ( isset( $user['roles'] ) && is_array( $user['roles'] ) ) {
 			$user_roles = array_map( 'sanitize_text_field', $user['roles'] );
@@ -210,7 +223,7 @@ class Actions {
 			'site_url'   => trailingslashit( esc_url_raw( $user['site_url'] ?? '' ) ),
 		);
 
-		// Only return if email is valid
+		// Only return if email is valid.
 		if ( empty( $sanitized_user['email'] ) || ! is_email( $sanitized_user['email'] ) ) {
 			return null;
 		}
@@ -225,19 +238,20 @@ class Actions {
 	 * @return WP_REST_Response
 	 */
 	public function add_deduplicated_users( WP_REST_Request $request ): WP_REST_Response {
+
 		$users           = $request->get_param( 'users' );
 		$sanitized_users = array();
 
 		foreach ( $users as $user ) {
 			$sanitized_user = $this->sanitize_user_data( $user );
-			if ( $sanitized_user !== null ) {
+			if ( null !== $sanitized_user ) {
 				$sanitized_users[] = $sanitized_user;
 			}
 		}
 
 		$action_id = null;
 
-		// Schedule governing site action to add deduplicated users
+		// Schedule governing site action to add deduplicated users.
 		if ( ! empty( $sanitized_users ) && function_exists( 'as_enqueue_async_action' ) ) {
 			$action_id = as_enqueue_async_action(
 				'oneaccess_add_deduplicated_users',
@@ -264,6 +278,7 @@ class Actions {
 	 * @param \WP_User $user User object.
 	 * @param string   $site_name Site name.
 	 * @param string   $site_url Site URL.
+	 *
 	 * @return array
 	 */
 	private function prepare_user_data( \WP_User $user, string $site_name, string $site_url ): array {
@@ -283,9 +298,10 @@ class Actions {
 	 *
 	 * @param array  $users_batch Users to send.
 	 * @param string $governing_site_url Governing site URL.
+	 *
 	 * @return array|WP_Error Response or error.
 	 */
-	private function send_users_batch( array $users_batch, string $governing_site_url ) {
+	private function send_users_batch( array $users_batch, string $governing_site_url ): array|WP_Error {
 		return wp_safe_remote_post(
 			trailingslashit( esc_url_raw( $governing_site_url ) ) . 'wp-json/' . self::NAMESPACE . '/add-deduplicated-users',
 			array(
@@ -302,15 +318,15 @@ class Actions {
 	 * @return WP_REST_Response
 	 */
 	public function send_users_for_deduplication(): WP_REST_Response {
+
 		$paged       = 1;
 		$users_batch = array();
 		$site_name   = get_option( 'blogname' );
 		$site_url    = get_site_url();
 
-		$governing_site_responses = array();
-		$governing_site_url       = 'http://onedesign.org/'; // TODO: Move to configuration
-		$total_users_sent         = 0;
-		$errors                   = array();
+		$governing_site_url = Utils::get_governing_site_url();
+		$total_users_sent   = 0;
+		$errors             = array();
 
 		while ( true ) {
 			$user_query = new \WP_User_Query(
@@ -330,7 +346,7 @@ class Actions {
 				$users_batch[] = $this->prepare_user_data( $user, $site_name, $site_url );
 			}
 
-			// Send the batch to add-deduplicated-users endpoint
+			// Send the batch to add-deduplicated-users endpoint.
 			$response = $this->send_users_batch( $users_batch, $governing_site_url );
 
 			if ( is_wp_error( $response ) ) {
@@ -346,7 +362,7 @@ class Actions {
 				$total_users_sent          += count( $users_batch );
 			}
 
-			// Reset batch for next iteration
+			// Reset batch for next iteration.
 			$users_batch = array();
 			++$paged;
 		}
@@ -359,7 +375,7 @@ class Actions {
 				'batch_size'         => self::BATCH_SIZE,
 				'errors'             => $errors,
 			),
-			empty( $errors ) ? 200 : 207 // 207 Multi-Status if there are errors
+			empty( $errors ) ? 200 : 207 // 207 Multi-Status if there are errors.
 		);
 	}
 
@@ -369,9 +385,11 @@ class Actions {
 	 * @param string $site_url Site URL.
 	 * @param string $api_key API key.
 	 * @param array  $query_params Query parameters.
+	 *
 	 * @return array|WP_Error Response data or error.
 	 */
 	private function make_brand_site_request( string $site_url, string $api_key, array $query_params ) {
+
 		$request_url = trailingslashit( $site_url ) . 'wp-json/' . self::NAMESPACE . '/get-brand-site-profile-requests?' . http_build_query( $query_params );
 
 		$args = array(
@@ -388,7 +406,7 @@ class Actions {
 		}
 
 		$response_code = wp_remote_retrieve_response_code( $response );
-		if ( $response_code !== 200 ) {
+		if ( 200 !== $response_code ) {
 			return new WP_Error(
 				'invalid_response',
 				sprintf( 'Site %s returned status code %d', $site_url, $response_code ),
@@ -400,7 +418,14 @@ class Actions {
 		$decoded_body  = json_decode( $response_body, true );
 
 		if ( ! isset( $decoded_body['profile_requests'] ) || ! is_array( $decoded_body['profile_requests'] ) ) {
-			return new WP_Error( 'invalid_data', 'Invalid response format from site: ' . $site_url );
+			return new WP_Error(
+				'invalid_data',
+				sprintf(
+						/* translators: 1: site URL */
+					'Invalid response format from site: %s',
+					$site_url
+				),
+			);
 		}
 
 		return $decoded_body;
@@ -410,10 +435,12 @@ class Actions {
 	 * Get users profile request data from all brand sites.
 	 *
 	 * @param WP_REST_Request $request Request object.
+	 *
 	 * @return WP_REST_Response
 	 */
 	public function get_profile_requests( WP_REST_Request $request ): WP_REST_Response {
-		// Get and sanitize parameters
+
+		// Get and sanitize parameters.
 		$site = $request->get_param( 'site' );
 		$site = ! empty( $site ) ? sanitize_text_field( $site ) : '';
 
@@ -427,13 +454,13 @@ class Actions {
 		$offset = ! empty( $cursor ) ? absint( $cursor ) : 0;
 
 		$full_sites             = $GLOBALS['oneaccess_sites'] ?? array();
-		$oneaccess_sites        = $full_sites; // Start with full list
+		$oneaccess_sites        = $full_sites; // Start with full list.
 		$processed_sites        = array();
 		$error_log              = array();
 		$all_profile_requests   = array();
 		$site_wise_total_counts = array();
 
-		// Compute available sites from full list (always all sites for dropdown)
+		// Compute available sites from full list (always all sites for dropdown).
 		$available_sites = array_map(
 			function ( $site_config ) {
 				$site_name = $site_config['siteName'] ?? __( 'Unknown Site', 'oneaccess' );
@@ -445,7 +472,7 @@ class Actions {
 			$full_sites
 		);
 
-		// Compute total_pending_count (global, all sites, ignoring current filters except status='pending')
+		// Compute total_pending_count (global, all sites, ignoring current filters except status='pending').
 		$total_pending_count = 0;
 		$temp_processed      = array();
 		foreach ( $full_sites as $site_config ) {
@@ -454,14 +481,19 @@ class Actions {
 
 			if ( empty( $site_url ) || in_array( $site_url, $temp_processed, true ) ) {
 				if ( ! empty( $site_url ) ) {
-					$error_log[] = 'Duplicate site URL skipped for pending count: ' . $site_url;
+					$error_log[] =
+						sprintf(
+							/* translators: 1: site URL */
+							'Duplicate site URL skipped for pending count: %s',
+							$site_url
+						);
 				}
 				continue;
 			}
 
 			$temp_processed[] = $site_url;
 
-			// Quick call: status='pending', no search, cursor=0 (just for total_count)
+			// Quick call: status='pending', no search, cursor=0 (just for total_count).
 			$pending_data = $this->make_brand_site_request(
 				$site_url,
 				$api_key,
@@ -480,7 +512,7 @@ class Actions {
 			$total_pending_count += intval( $pending_data['pagination']['total_count'] ?? 0 );
 		}
 
-		// Apply site filter for main query
+		// Apply site filter for main query.
 		if ( ! empty( $site ) ) {
 			$oneaccess_sites = array_filter(
 				$full_sites,
@@ -490,26 +522,31 @@ class Actions {
 			);
 		}
 
-		// Fetch FULL results for current filter from each site
+		// Fetch FULL results for current filter from each site.
 		foreach ( $oneaccess_sites as $site_config ) {
 			$site_url  = $site_config['siteUrl'] ?? '';
 			$site_name = $site_config['siteName'] ?? __( 'Unknown Site', 'oneaccess' );
 			$api_key   = $site_config['apiKey'] ?? '';
 
-			// Skip duplicate or invalid sites
+			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
 				if ( ! empty( $site_url ) ) {
-					$error_log[] = 'Duplicate site URL skipped: ' . $site_url;
+					$error_log[] =
+						sprintf(
+							/* translators: 1: site URL */
+							'Duplicate site URL skipped for profile requests: %s',
+							$site_url
+						);
 				}
 				continue;
 			}
 
 			$processed_sites[] = $site_url;
 
-			// Paginate through ALL pages for this site
+			// Paginate through ALL pages for this site.
 			$site_requests    = array();
 			$current_cursor   = 0;
-			$site_total_count = 0; // For site_wise_total
+			$site_total_count = 0;
 
 			do {
 				$query_params = array(
@@ -521,11 +558,17 @@ class Actions {
 				$site_data = $this->make_brand_site_request( $site_url, $api_key, $query_params );
 
 				if ( is_wp_error( $site_data ) ) {
-					$error_log[] = sprintf( 'Failed to fetch from %s: %s', $site_url, $site_data->get_error_message() );
+					$error_log[] =
+						sprintf(
+							/* translators: 1: site URL, 2: error message */
+							'Failed to fetch from %s: %s',
+							$site_url,
+							$site_data->get_error_message()
+						);
 					break;
 				}
 
-				// Add site_name to each request
+				// Add site_name to each request.
 				foreach ( $site_data['profile_requests'] as &$req ) {
 					$req['site_name'] = $site_name;
 				}
@@ -536,17 +579,17 @@ class Actions {
 				$current_cursor = $pagination['next_cursor'] ?? null;
 				$has_more       = $pagination['has_more'] ?? false;
 
-				// Set total on first fetch
-				if ( $site_total_count === 0 ) {
+				// Set total on first fetch.
+				if ( 0 === $site_total_count ) {
 					$site_total_count = intval( $pagination['total_count'] ?? 0 );
 				}
-			} while ( $has_more && $current_cursor !== null );
+			} while ( $has_more && null !== $current_cursor );
 
 			$site_wise_total_counts[ $site_name ] = $site_total_count;
 			$all_profile_requests                 = array_merge( $all_profile_requests, $site_requests );
 		}
 
-		// Sort ALL results by created_at DESC
+		// Sort ALL results by created_at DESC.
 		usort(
 			$all_profile_requests,
 			function ( $a, $b ) {
@@ -556,19 +599,19 @@ class Actions {
 			}
 		);
 
-		// Total count from full aggregate
+		// Total count from full aggregate.
 		$total_count = count( $all_profile_requests );
 
-		// Apply pagination AFTER sorting
+		// Apply pagination AFTER sorting.
 		$paginated_results = array_slice( $all_profile_requests, $offset, self::RESULTS_LIMIT );
 
-		// Calculate pagination info
+		// Calculate pagination info.
 		$has_more     = $total_count > ( $offset + self::RESULTS_LIMIT );
 		$next_cursor  = $has_more ? $offset + self::RESULTS_LIMIT : null;
 		$total_pages  = (int) ceil( $total_count / self::RESULTS_LIMIT );
 		$current_page = (int) floor( $offset / self::RESULTS_LIMIT ) + 1;
 
-		// Count results per site in current page
+		// Count results per site in current page.
 		$site_result_counts = array();
 		foreach ( $paginated_results as $req ) {
 			$req_site_name                        = $req['site_name'] ?? __( 'Unknown Site', 'oneaccess' );
@@ -608,6 +651,7 @@ class Actions {
 	 * @return array Array with 'sql' and 'params' keys.
 	 */
 	private function build_profile_requests_where_clause( string $status, string $search_query ): array {
+
 		global $wpdb;
 
 		$where_clauses = array( '1=1' );
@@ -636,9 +680,10 @@ class Actions {
 	 * @return WP_REST_Response
 	 */
 	public function get_brand_site_profile_requests( WP_REST_Request $request ): WP_REST_Response {
+
 		global $wpdb;
 
-		// Sanitize and validate input parameters
+		// Sanitize and validate input parameters.
 		$status = $request->get_param( 'status' );
 		$status = ! empty( $status ) ? sanitize_text_field( $status ) : '';
 
@@ -650,32 +695,37 @@ class Actions {
 
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		// Build WHERE clause
+		// Build WHERE clause.
 		$where_clause = $this->build_profile_requests_where_clause( $status, $search_query );
 
-		// Get total count for pagination
-		$count_query = $wpdb->prepare(
-			"SELECT COUNT(*) FROM `{$table_name}` WHERE {$where_clause['sql']}",
-			$where_clause['params']
+		// Get total count for pagination.
+		$count_query = sprintf(
+			'SELECT COUNT(*) FROM `%s` WHERE %s',
+			$table_name,
+			$where_clause['sql']
 		);
-		$total_count = (int) $wpdb->get_var( $count_query );
 
-		// Prepare and execute main query with ORDER BY created_at DESC
-		$query = $wpdb->prepare(
+		// Then prepare with params.
+		$count_query = $wpdb->prepare( $count_query, $where_clause['params'] ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- parameters are prepared.
+		$total_count = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- parameters are already prepared.
+
+		// Prepare and execute main query with ORDER BY created_at DESC.
+		$params = array_merge( $where_clause['params'], array( self::RESULTS_LIMIT, $offset ) );
+		$query  = $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- parameters are correct used spread on array.
 			"SELECT * FROM `{$table_name}` WHERE {$where_clause['sql']} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-			array_merge( $where_clause['params'], array( self::RESULTS_LIMIT, $offset ) )
+			...$params
 		);
 
-		$results = $wpdb->get_results( $query, ARRAY_A );
+		$results = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is already prepared.
 
-		// Decode request_data JSON field
+		// Decode request_data JSON field.
 		foreach ( $results as &$result ) {
 			if ( isset( $result['request_data'] ) && is_string( $result['request_data'] ) ) {
 				$result['request_data'] = json_decode( $result['request_data'], true );
 			}
 		}
 
-		// Calculate pagination info
+		// Calculate pagination info.
 		$has_more    = $total_count > ( $offset + self::RESULTS_LIMIT );
 		$next_cursor = $has_more ? $offset + self::RESULTS_LIMIT : null;
 
@@ -694,5 +744,28 @@ class Actions {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Send single user to governing site for deduplication.
+	 *
+	 * @param int $user_id User ID.
+	 *
+	 * @return void
+	 */
+	public function send_single_user_for_deduplication( int $user_id ): void {
+
+		$user = get_user_by( 'ID', $user_id );
+
+		if ( ! $user ) {
+			return;
+		}
+
+		$site_name = get_option( 'blogname' );
+		$site_url  = get_site_url();
+		$user_data = $this->prepare_user_data( $user, $site_name, $site_url );
+
+		$governing_site_url = Utils::get_governing_site_url();
+		$this->send_users_batch( array( $user_data ), $governing_site_url );
 	}
 }

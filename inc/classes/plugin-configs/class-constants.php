@@ -43,20 +43,6 @@ class Constants {
 	public const ONEACCESS_SITE_TYPE = 'oneaccess_site_type';
 
 	/**
-	 * Profile update requests.
-	 *
-	 * @var string
-	 */
-	public const ONEACCESS_PROFILE_UPDATE_REQUESTS = 'oneaccess_profile_update_requests';
-
-	/**
-	 * New users.
-	 *
-	 * @var string
-	 */
-	public const ONEACCESS_NEW_USERS = 'oneaccess_new_users';
-
-	/**
 	 * Site type transient.
 	 *
 	 * @var string

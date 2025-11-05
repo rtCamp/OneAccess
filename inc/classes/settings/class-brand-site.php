@@ -10,7 +10,7 @@ namespace OneAccess\Settings;
 use OneAccess\Utils;
 use OneAccess\Traits\Singleton;
 use OneAccess\Plugin_Configs\DB;
-
+use OneAccess\REST\Actions;
 
 /**
  * Class Brand_Site
@@ -38,6 +38,12 @@ class Brand_Site {
 		if ( ! Utils::is_brand_site() ) {
 			return;
 		}
+
+		// trigger oneaccess_governing_site_configured action to send uses data to governing site.
+		add_action( 'oneaccess_governing_site_configured', array( $this, 'send_users_in_batch' ) );
+
+		// when user is created then send it to governing site.
+		add_action( 'user_register', array( $this, 'send_registered_user_to_governing_site' ) );
 
 		// get current user.
 		$current_user = wp_get_current_user();
@@ -93,5 +99,25 @@ class Brand_Site {
 			}
 		}
 		return $value;
+	}
+
+	/**
+	 * Send users data in batch to governing site.
+	 *
+	 * @return void
+	 */
+	public function send_users_in_batch(): void {
+		Actions::get_instance()->send_users_for_deduplication();
+	}
+
+	/**
+	 * Send newly registered user to governing site.
+	 *
+	 * @param int $user_id User ID.
+	 *
+	 * @return void
+	 */
+	public function send_registered_user_to_governing_site( int $user_id ): void {
+		Actions::get_instance()->send_single_user_for_deduplication( $user_id );
 	}
 }

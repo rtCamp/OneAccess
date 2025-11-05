@@ -13,9 +13,9 @@ import {
 	Modal,
 	CheckboxControl,
 	Notice,
-	__experimentalGrid as Grid,
-	__experimentalHStack as HStack,
-	__experimentalVStack as VStack,
+	__experimentalGrid as Grid, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalHStack as HStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalVStack as VStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
 	Dashicon,
 	Snackbar,
 	SnackbarList,

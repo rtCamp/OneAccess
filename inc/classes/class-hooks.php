@@ -59,10 +59,7 @@ class Hooks {
 			return $classes;
 		}
 
-		// get oneaccess_site_type_transient transient to check if site type is set.
-		$site_type_transient = get_transient( Constants::ONEACCESS_SITE_TYPE_TRANSIENT );
-		if ( $site_type_transient ) {
-			// If site type is already set, do not show the modal.
+		if ( Utils::is_site_type_set() ) {
 			return $classes;
 		}
 
@@ -85,10 +82,7 @@ class Hooks {
 			return;
 		}
 
-		// get oneaccess_site_type_transient transient to check if site type is set.
-		$site_type_transient = get_transient( Constants::ONEACCESS_SITE_TYPE_TRANSIENT );
-		if ( $site_type_transient ) {
-			// If site type is already set, do not show the modal.
+		if ( Utils::is_site_type_set() ) {
 			return;
 		}
 
