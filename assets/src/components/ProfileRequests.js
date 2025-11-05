@@ -504,8 +504,9 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 								variant="primary"
 								onClick={ () => handleAcceptRequest( selectedRequest ) }
 								disabled={ isProcessing }
+								isBusy={ isProcessing }
 							>
-								{ isProcessing ? __( 'Processing…', 'oneaccess' ) : __( 'Accept', 'oneaccess' ) }
+								{ __( 'Accept', 'oneaccess' ) }
 							</Button>
 						</div>
 					) }
@@ -556,8 +557,9 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 							onClick={ handleRejectRequest }
 							isDestructive
 							disabled={ isProcessing || ! rejectionComment.trim() }
+							isBusy={ isProcessing }
 						>
-							{ isProcessing ? __( 'Rejecting…', 'oneaccess' ) : __( 'Reject Request', 'oneaccess' ) }
+							{ __( 'Reject Request', 'oneaccess' ) }
 						</Button>
 					</div>
 				</Modal>

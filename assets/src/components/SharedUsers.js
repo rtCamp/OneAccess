@@ -182,7 +182,7 @@ const SharedUsers = ( { availableSites } ) => {
 		// Initialize user roles with current roles
 		const initialRoles = {};
 		user.sites?.forEach( ( site ) => {
-			initialRoles[ site.site_url ] = site.role || '';
+			initialRoles[ site.site_url ] = site.roles?.length > 0 ? site.roles?.[ 0 ] : ( Object.keys( AVAILABLE_ROLES ).find( ( key ) => AVAILABLE_ROLES[ key ] === site.role ) || '' );
 		} );
 
 		setUserRoles( initialRoles );
@@ -766,7 +766,7 @@ const SharedUsers = ( { availableSites } ) => {
 											</div>
 										</div>
 										<SelectControl
-											value={ Object.keys( AVAILABLE_ROLES ).find( ( key ) => AVAILABLE_ROLES[ key ] === site.role ) || userRoles[ site.site_url ] || site.role || '' }
+											value={ userRoles[ site.site_url ] || site.role || '' }
 											options={ [
 												...Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
 													value: role,
@@ -799,7 +799,7 @@ const SharedUsers = ( { availableSites } ) => {
 								isBusy={ isUpdatingRoles }
 							>
 								<Dashicon icon="admin-users" style={ { marginRight: '8px' } } />
-								{ isUpdatingRoles ? __( 'Updating Roles…', 'oneaccess' ) : __( 'Update Roles', 'oneaccess' ) }
+								{ __( 'Update Roles', 'oneaccess' ) }
 							</Button>
 						</HStack>
 					</VStack>
@@ -971,7 +971,7 @@ const SharedUsers = ( { availableSites } ) => {
 								isBusy={ isAddingToSites }
 							>
 								<Icon icon={ plus } />
-								{ isAddingToSites ? __( 'Adding to Sites…', 'oneaccess' ) : __( 'Add to Sites', 'oneaccess' ) }
+								{ __( 'Add to Sites', 'oneaccess' ) }
 							</Button>
 						</HStack>
 					</VStack>
@@ -1128,7 +1128,7 @@ const SharedUsers = ( { availableSites } ) => {
 								isBusy={ isDeletingUser }
 							>
 								<Icon icon={ trash } />
-								{ isDeletingUser ? __( 'Deleting user…', 'oneaccess' ) : __( 'Delete user', 'oneaccess' ) }
+								{ __( 'Delete user', 'oneaccess' ) }
 							</Button>
 						</HStack>
 					</VStack>

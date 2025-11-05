@@ -468,7 +468,7 @@ const CreateUser = ( { availableSites } ) => {
 								isBusy={ isUserCreating }
 							>
 								<Dashicon icon="admin-users" style={ { marginRight: '8px' } } />
-								{ isUserCreating ? __( 'Creating User…', 'oneaccess' ) : __( 'Create User on Sites', 'oneaccess' ) }
+								{ __( 'Create User on Sites', 'oneaccess' ) }
 							</Button>
 						</HStack>
 					</VStack>

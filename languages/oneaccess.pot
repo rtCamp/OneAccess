@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-05T16:33:31+00:00\n"
+"POT-Creation-Date: 2025-11-05T17:05:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 
@@ -632,11 +632,6 @@ msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/src/components/CreateUser.js:471
-msgid "Creating User…"
-msgstr ""
-
-#: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:471
 msgid "Create User on Sites"
 msgstr ""
 
@@ -842,11 +837,6 @@ msgstr ""
 
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/SharedUsers.js:802
-msgid "Updating Roles…"
-msgstr ""
-
-#: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:802
 msgid "Update Roles"
 msgstr ""
 
@@ -871,11 +861,6 @@ msgid "This user is already assigned to all available sites."
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:974
-msgid "Adding to Sites…"
-msgstr ""
-
-#: assets/build/js/manage-user.js:2
 #: assets/src/components/SharedUsers.js:992
 msgid "Delete User from selected sites: "
 msgstr ""
@@ -883,11 +868,6 @@ msgstr ""
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/SharedUsers.js:1108
 msgid "This user cannot be deleted."
-msgstr ""
-
-#: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:1131
-msgid "Deleting user…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
@@ -1076,47 +1056,37 @@ msgid "Reject"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:508
-msgid "Processing…"
-msgstr ""
-
-#: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:508
+#: assets/src/components/ProfileRequests.js:509
 msgid "Accept"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:515
+#: assets/src/components/ProfileRequests.js:516
 msgid "Rejection Comment: "
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:526
+#: assets/src/components/ProfileRequests.js:527
 msgid "Reject Profile Updates Changes"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:534
+#: assets/src/components/ProfileRequests.js:535
 msgid "Please provide a reason for rejecting this profile update request:"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:536
+#: assets/src/components/ProfileRequests.js:537
 msgid "Enter rejection reason…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:552
+#: assets/src/components/ProfileRequests.js:553
 msgid "Back"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:560
-msgid "Rejecting…"
-msgstr ""
-
-#: assets/build/js/manage-user.js:2
-#: assets/src/components/ProfileRequests.js:560
+#: assets/src/components/ProfileRequests.js:562
 msgid "Reject Request"
 msgstr ""
 
