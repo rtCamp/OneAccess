@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-05T06:15:32+00:00\n"
+"POT-Creation-Date: 2025-11-05T16:33:31+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 
@@ -83,10 +83,26 @@ msgstr ""
 msgid "Cursor for pagination."
 msgstr ""
 
-#: inc/classes/rest/class-actions.php:466
-#: inc/classes/rest/class-actions.php:528
-#: inc/classes/rest/class-actions.php:617
+#: inc/classes/rest/class-actions.php:497
+#: inc/classes/rest/class-actions.php:559
+#: inc/classes/rest/class-actions.php:648
 msgid "Unknown Site"
+msgstr ""
+
+#: inc/classes/rest/class-actions.php:838
+msgid "No connected sites found in global configuration."
+msgstr ""
+
+#: inc/classes/rest/class-actions.php:927
+msgid "Cleanup completed successfully."
+msgstr ""
+
+#: inc/classes/rest/class-actions.php:990
+msgid "Rebuild initiated"
+msgstr ""
+
+#: inc/classes/rest/class-actions.php:1017
+msgid "Brand sites index rebuild initiated successfully."
 msgstr ""
 
 #: inc/classes/rest/class-basic-options.php:196
@@ -97,7 +113,7 @@ msgstr ""
 msgid "Health check passed successfully."
 msgstr ""
 
-#: inc/classes/rest/class-basic-options.php:318
+#: inc/classes/rest/class-basic-options.php:315
 msgid "Brand Site already exists."
 msgstr ""
 
@@ -136,7 +152,7 @@ msgid "Failed to reject profile request."
 msgstr ""
 
 #: inc/classes/rest/class-brand-site.php:185
-#: inc/classes/rest/class-users.php:582
+#: inc/classes/rest/class-users.php:587
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:207
 msgid "Profile request rejected successfully."
@@ -153,7 +169,7 @@ msgid "Failed to approve profile request."
 msgstr ""
 
 #: inc/classes/rest/class-brand-site.php:250
-#: inc/classes/rest/class-users.php:665
+#: inc/classes/rest/class-users.php:670
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:158
 msgid "Profile request approved successfully."
@@ -184,16 +200,16 @@ msgid "Email and username are required."
 msgstr ""
 
 #: inc/classes/rest/class-users.php:396
-#: inc/classes/rest/class-users.php:557
-#: inc/classes/rest/class-users.php:620
-#: inc/classes/rest/class-users.php:831
+#: inc/classes/rest/class-users.php:562
+#: inc/classes/rest/class-users.php:625
+#: inc/classes/rest/class-users.php:837
 msgid "User not found."
 msgstr ""
 
 #: inc/classes/rest/class-users.php:412
-#: inc/classes/rest/class-users.php:509
+#: inc/classes/rest/class-users.php:510
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:222
+#: assets/src/components/SharedUsers.js:238
 msgid "User deleted successfully."
 msgstr ""
 
@@ -202,177 +218,171 @@ msgid "Email, username and sites are required."
 msgstr ""
 
 #: inc/classes/rest/class-users.php:445
-#: inc/classes/rest/class-users.php:699
-#: inc/classes/rest/class-users.php:1283
+#: inc/classes/rest/class-users.php:704
+#: inc/classes/rest/class-users.php:1296
 msgid "Invalid sites data."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:477
+#: inc/classes/rest/class-users.php:478
 #, php-format
 msgid "Error deleting user from site %s."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:490
+#: inc/classes/rest/class-users.php:491
 #, php-format
 msgid "Failed to delete user from site %s."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:502
+#: inc/classes/rest/class-users.php:503
 msgid "Failed to delete user from site."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:516
+#: inc/classes/rest/class-users.php:520
 msgid "User deleted from sites successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:545
+#: inc/classes/rest/class-users.php:550
 msgid "User email and rejection comment are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:570
-#: inc/classes/rest/class-users.php:633
+#: inc/classes/rest/class-users.php:575
+#: inc/classes/rest/class-users.php:638
 msgid "No pending profile request found for this user."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:604
+#: inc/classes/rest/class-users.php:609
 msgid "User ID and request ID are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:688
+#: inc/classes/rest/class-users.php:693
 msgid "Email, username, full name, password and sites are required."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:715
+#: inc/classes/rest/class-users.php:720
 #, php-format
 msgid "Site %s not found in OneAccess sites."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:748
+#: inc/classes/rest/class-users.php:753
 #, php-format
 msgid "Error adding user to site %s."
 msgstr ""
 
-#. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:762
-#, php-format
-msgid "Failed to add user to site %s."
-msgstr ""
-
-#: inc/classes/rest/class-users.php:774
+#: inc/classes/rest/class-users.php:780
 msgid "Failed to add user to site."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:782
+#: inc/classes/rest/class-users.php:788
 msgid "User added successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:789
+#: inc/classes/rest/class-users.php:795
 msgid "User added to sites successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:819
+#: inc/classes/rest/class-users.php:825
 msgid "Email, username and role are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:854
-#: inc/classes/rest/class-users.php:946
+#: inc/classes/rest/class-users.php:860
+#: inc/classes/rest/class-users.php:953
 msgid "User role updated successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:875
+#: inc/classes/rest/class-users.php:881
 msgid "Email, username and roles are required."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:912
+#: inc/classes/rest/class-users.php:919
 #, php-format
 msgid "Error updating user role on site %s."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:926
+#: inc/classes/rest/class-users.php:933
 #, php-format
 msgid "Failed to update user role on site %s."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:938
+#: inc/classes/rest/class-users.php:945
 msgid "Failed to update user role on site."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:953
+#: inc/classes/rest/class-users.php:964
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:271
+#: assets/src/components/SharedUsers.js:287
 msgid "User roles updated successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:983
+#: inc/classes/rest/class-users.php:995
 msgid "Username, email, full name and password are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:993
+#: inc/classes/rest/class-users.php:1005
 msgid "Invalid email address."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1004
+#: inc/classes/rest/class-users.php:1016
 msgid "Username already exists, please user different username."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1015
+#: inc/classes/rest/class-users.php:1027
 msgid "Email already exists, please user different email."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1054
-#: inc/classes/rest/class-users.php:1397
+#: inc/classes/rest/class-users.php:1066
+#: inc/classes/rest/class-users.php:1410
 msgid "User created successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1261
+#: inc/classes/rest/class-users.php:1274
 msgid "User data and sites are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1272
+#: inc/classes/rest/class-users.php:1285
 msgid "Invalid user data."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1294
+#: inc/classes/rest/class-users.php:1307
 msgid "Username is required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1303
+#: inc/classes/rest/class-users.php:1316
 msgid "Please enter valid email id."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1312
+#: inc/classes/rest/class-users.php:1325
 msgid "Password is required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1321
+#: inc/classes/rest/class-users.php:1334
 msgid "Full name is required."
 msgstr ""
 
 #. translators: %s is the site name
-#: inc/classes/rest/class-users.php:1340
+#: inc/classes/rest/class-users.php:1353
 #, php-format
 msgid "API key not found for site %s."
 msgstr ""
 
 #. translators: %s is the site name
-#: inc/classes/rest/class-users.php:1371
+#: inc/classes/rest/class-users.php:1384
 #, php-format
 msgid "Error creating user on site %s."
 msgstr ""
 
 #. translators: %s is the site name
-#: inc/classes/rest/class-users.php:1385
+#: inc/classes/rest/class-users.php:1398
 #, php-format
 msgid "Failed to create user on site %s."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1404
+#: inc/classes/rest/class-users.php:1417
 msgid "User creation process completed."
 msgstr ""
 
@@ -450,257 +460,305 @@ msgid "OneAccess GitHub repository"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:88
+#: assets/src/components/CreateUser.js:66
+#: assets/src/components/SharedUsers.js:471
 msgid "Failed to generate password. Please try again later."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:102
+#: assets/src/components/CreateUser.js:80
+#: assets/src/components/SharedUsers.js:485
 msgid "Password generated successfully."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:96
+#: assets/src/components/CreateUser.js:74
+#: assets/src/components/SharedUsers.js:479
 msgid "No password generated. Please try again."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:108
+#: assets/src/components/CreateUser.js:86
+#: assets/src/components/SharedUsers.js:491
 msgid "Failed to generate a password. Please try again later."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:152
-#: assets/src/components/CreateUser.js:193
+#: assets/src/components/CreateUser.js:130
+#: assets/src/components/CreateUser.js:171
 msgid "Failed to create user. Please try again later."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:161
+#: assets/src/components/CreateUser.js:139
 msgid "An error occurred while creating the user. Please try again."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:172
+#: assets/src/components/CreateUser.js:150
 msgid "No site information available."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:222
+#: assets/src/components/CreateUser.js:185
 msgid "Create User"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:228
+#: assets/src/components/CreateUser.js:191
 msgid "Assign to Sites"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:235
+#: assets/src/components/CreateUser.js:198
 msgid "Username*"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:239
+#: assets/src/components/CreateUser.js:202
 msgid "Enter a unique username for the user account."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:242
+#: assets/src/components/CreateUser.js:205
 msgid "Full Name*"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:246
+#: assets/src/components/CreateUser.js:209
 msgid "Enter the user's display name."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:249
+#: assets/src/components/CreateUser.js:212
 msgid "Email Address*"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:254
+#: assets/src/components/CreateUser.js:217
 msgid "A valid email address for account notifications."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:257
+#: assets/src/components/CreateUser.js:220
 msgid "User Role*"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:264
+#: assets/src/components/CreateUser.js:227
 msgid "Select the user role that determines their capabilities."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:269
+#: assets/src/components/CreateUser.js:232
+#: assets/src/components/Password.js:31
 msgid "Password*"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:274
+#: assets/src/components/CreateUser.js:237
+#: assets/src/components/Password.js:39
 msgid "Password must be at least 8 characters long. Use a mix of letters (upper & lower case), numbers, and special characters for better security."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:279
+#: assets/src/components/CreateUser.js:242
+#: assets/src/components/Password.js:44
 msgid "Hide password"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:279
+#: assets/src/components/CreateUser.js:242
+#: assets/src/components/Password.js:44
 msgid "Show password"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:296
+#: assets/src/components/CreateUser.js:259
+#: assets/src/components/Password.js:61
 msgid "Password Strength:"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:334
+#: assets/src/components/CreateUser.js:297
+#: assets/src/components/Password.js:95
 msgid "Generate strong password"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:365
+#: assets/src/components/CreateUser.js:328
 msgid "Select Sites for User Creation"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:373
+#: assets/src/components/CreateUser.js:336
 msgid "Select the sites where you want to create this user."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/CreateUser.js:380
-#: assets/src/components/SharedUsers.js:661
-#: assets/src/components/SharedUsers.js:822
+#: assets/src/components/CreateUser.js:343
+#: assets/src/components/SharedUsers.js:829
+#: assets/src/components/SharedUsers.js:1001
 msgid "Select All Sites"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/CreateUser.js:402
-#: assets/src/components/SharedUsers.js:685
-#: assets/src/components/SharedUsers.js:844
+#: assets/src/components/CreateUser.js:365
+#: assets/src/components/SharedUsers.js:853
+#: assets/src/components/SharedUsers.js:1023
 msgid "Clear Selection"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:485
+#: assets/src/components/CreateUser.js:448
 msgid "No sites available. Please add sites first."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
 #: assets/build/js/settings.js:1
-#: assets/src/components/CreateUser.js:499
-#: assets/src/components/SharedUsers.js:625
-#: assets/src/components/SharedUsers.js:786
-#: assets/src/components/SharedUsers.js:942
+#: assets/src/components/CreateUser.js:462
+#: assets/src/components/SharedUsers.js:793
+#: assets/src/components/SharedUsers.js:965
+#: assets/src/components/SharedUsers.js:1121
+#: assets/src/components/SharedUsers.js:1155
+#: assets/src/components/SharedUsers.js:1191
 #: assets/src/components/SiteSettings.js:257
 #: assets/src/components/SiteTable.js:108
 msgid "Cancel"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:508
+#: assets/src/components/CreateUser.js:471
 msgid "Creating User…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/CreateUser.js:508
+#: assets/src/components/CreateUser.js:471
 msgid "Create User on Sites"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:138
+#: assets/src/components/SharedUsers.js:154
 msgid "Failed to fetch users. Please try again later."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:230
+#: assets/src/components/SharedUsers.js:246
 msgid "Failed to delete user."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:279
+#: assets/src/components/SharedUsers.js:295
 msgid "Failed to update user roles. Please try again."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:321
+#: assets/src/components/SharedUsers.js:337
 msgid "User added to sites successfully: "
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:329
+#: assets/src/components/SharedUsers.js:346
 msgid "Failed to add user to sites. Please try again."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:344
+#: assets/src/components/SharedUsers.js:361
 msgid "No Role"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:351
+#: assets/src/components/SharedUsers.js:381
+#: assets/src/components/SharedUsers.js:390
+#: assets/src/components/SharedUsers.js:403
+msgid "Failed to cleanup disconnected sites users."
+msgstr ""
+
+#: assets/build/js/manage-user.js:1
+#: assets/src/components/SharedUsers.js:395
+msgid "Disconnected sites users cleanup completed successfully."
+msgstr ""
+
+#: assets/build/js/manage-user.js:1
+#: assets/src/components/SharedUsers.js:427
+#: assets/src/components/SharedUsers.js:436
+#: assets/src/components/SharedUsers.js:447
+msgid "Failed to rebuild deduplicated users index."
+msgstr ""
+
+#: assets/build/js/manage-user.js:1
+#: assets/src/components/SharedUsers.js:441
+msgid "Deduplicated users index rebuilt successfully."
+msgstr ""
+
+#: assets/build/js/manage-user.js:1
+#: assets/src/components/SharedUsers.js:506
 msgid "Shared Users"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:356
+#: assets/src/components/SharedUsers.js:520
+msgid "Cleanup Disconnected Sites Users"
+msgstr ""
+
+#: assets/build/js/manage-user.js:1
+#: assets/build/js/manage-user.js:2
+#: assets/src/components/SharedUsers.js:530
+#: assets/src/components/SharedUsers.js:1177
+msgid "Rebuild Deduplicated Users Index"
+msgstr ""
+
+#: assets/build/js/manage-user.js:1
+#: assets/src/components/SharedUsers.js:537
 msgid "Search users by name or email.."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:359
+#: assets/src/components/SharedUsers.js:540
 msgid "Search Users"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:376
-#: assets/src/components/SharedUsers.js:362
+#: assets/src/components/SharedUsers.js:543
 msgid "Filter by site"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:306
-#: assets/src/components/SharedUsers.js:365
+#: assets/src/components/SharedUsers.js:546
 msgid "All Sites"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:374
+#: assets/src/components/SharedUsers.js:555
 msgid "Filter by role"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:377
+#: assets/src/components/SharedUsers.js:558
 msgid "All Roles"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:390
+#: assets/src/components/SharedUsers.js:571
 msgid "Name"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:393
-#: assets/src/components/SharedUsers.js:391
+#: assets/src/components/SharedUsers.js:572
 msgid "Email"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:392
+#: assets/src/components/SharedUsers.js:573
 msgid "Sites"
 msgstr ""
 
@@ -708,138 +766,154 @@ msgstr ""
 #: assets/build/js/manage-user.js:2
 #: assets/build/js/settings.js:1
 #: assets/src/components/ProfileRequests.js:397
-#: assets/src/components/SharedUsers.js:393
+#: assets/src/components/SharedUsers.js:574
 #: assets/src/components/SiteTable.js:44
 msgid "Actions"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:401
+#: assets/src/components/SharedUsers.js:582
 msgid "Loading users…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:410
+#: assets/src/components/SharedUsers.js:591
 msgid "No users found."
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:422
-msgid "Clear filters"
-msgstr ""
-
-#: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:467
+#: assets/src/components/SharedUsers.js:635
 msgid "No sites assigned"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:475
+#: assets/src/components/SharedUsers.js:643
 msgid "User actions"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
-#: assets/src/components/SharedUsers.js:490
+#: assets/src/components/SharedUsers.js:658
 msgid "Manage Roles"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:500
-#: assets/src/components/SharedUsers.js:795
+#: assets/src/components/SharedUsers.js:668
+#: assets/src/components/SharedUsers.js:974
 msgid "Add to Sites"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:514
-#: assets/src/components/SharedUsers.js:805
+#: assets/src/components/SharedUsers.js:682
+#: assets/src/components/SharedUsers.js:984
 msgid "Delete User"
 msgstr ""
 
 #: assets/build/js/manage-user.js:1
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:456
-#: assets/src/components/SharedUsers.js:533
+#: assets/src/components/SharedUsers.js:701
 msgid "Previous"
 msgstr ""
 
 #. translators: 1: Current page number. 2: Total pages.
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:539
+#: assets/src/components/SharedUsers.js:707
 #, js-format
 msgid "Page %1$s of %2$s"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
 #: assets/src/components/ProfileRequests.js:466
-#: assets/src/components/SharedUsers.js:550
+#: assets/src/components/SharedUsers.js:718
 msgid "Next"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:560
+#: assets/src/components/SharedUsers.js:728
 msgid "Manage User Roles"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:568
+#: assets/src/components/SharedUsers.js:736
 msgid "Manage roles for user: "
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:634
+#: assets/src/components/SharedUsers.js:802
 msgid "Updating Roles…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:634
+#: assets/src/components/SharedUsers.js:802
 msgid "Update Roles"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:644
+#: assets/src/components/SharedUsers.js:812
 msgid "Add User to Sites"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:652
+#: assets/src/components/SharedUsers.js:820
 msgid "Add user to additional sites: "
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:746
+#: assets/src/components/SharedUsers.js:914
 msgid "Role"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:773
+#: assets/src/components/SharedUsers.js:941
 msgid "This user is already assigned to all available sites."
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:795
+#: assets/src/components/SharedUsers.js:974
 msgid "Adding to Sites…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:813
+#: assets/src/components/SharedUsers.js:992
 msgid "Delete User from selected sites: "
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:929
+#: assets/src/components/SharedUsers.js:1108
 msgid "This user cannot be deleted."
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:952
+#: assets/src/components/SharedUsers.js:1131
 msgid "Deleting user…"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
-#: assets/src/components/SharedUsers.js:952
+#: assets/src/components/SharedUsers.js:1131
 msgid "Delete user"
+msgstr ""
+
+#: assets/build/js/manage-user.js:2
+#: assets/src/components/SharedUsers.js:1141
+#: assets/src/components/SharedUsers.js:1167
+msgid "Confirm Cleanup"
+msgstr ""
+
+#: assets/build/js/manage-user.js:2
+#: assets/src/components/SharedUsers.js:1148
+msgid "Are you sure you want to cleanup users associated with disconnected sites? This action cannot be undone."
+msgstr ""
+
+#: assets/build/js/manage-user.js:2
+#: assets/src/components/SharedUsers.js:1184
+msgid "Rebuilding the deduplicated users index is async process that may take some time to complete depending on the number of users in your network. Are you sure you want to proceed?"
+msgstr ""
+
+#: assets/build/js/manage-user.js:2
+#: assets/src/components/SharedUsers.js:1201
+msgid "Rebuild Index"
 msgstr ""
 
 #: assets/build/js/manage-user.js:2
