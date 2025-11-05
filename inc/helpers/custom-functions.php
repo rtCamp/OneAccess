@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Utils;
+use ParagonIE\Sodium\Core\Util;
 
 /**
  * Validate API key for general request.
@@ -41,7 +42,7 @@ function oneaccess_validate_api_key_health_check(): bool {
 function oneaccess_key_validation( $is_health_check ): bool {
 	// check if the request is from same site.
 	if ( Utils::is_governing_site() ) {
-		return current_user_can( 'manage_options' ) ? true : false;
+		return current_user_can( 'manage_options' );
 	}
 
 	// check X-oneaccess-Token header.
@@ -87,5 +88,39 @@ function oneaccess_key_validation( $is_health_check ): bool {
 			return true;
 		}
 	}
+	return false;
+}
+
+/**
+ * Permission check for brand site to governing site requests.
+ *
+ * @return bool
+ */
+function oneaccess_brand_site_to_governing_site_request_permission_check(): bool {
+
+	// check X-oneaccess-Token header.
+	if ( isset( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) && ! empty( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) ) {
+		$token = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) );
+		
+		// check if governing site is set and matches with request origin.
+		$request_origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? untrailingslashit( sanitize_url( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) ) : '';
+		$user_agent     = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : ''; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___SERVER__HTTP_USER_AGENT__ -- this is to know requesting user domain for request which are generated from server.
+
+		// get connected sites.
+		$connected_sites = Utils::get_connected_sites();
+		
+		foreach ( $connected_sites as $site ) {
+			$site_url = isset( $site['siteUrl'] ) ? untrailingslashit( esc_url_raw( $site['siteUrl'] ) ) : '';
+
+			if ( Utils::is_same_domain( $site_url, $request_origin ) || false !== strpos( $user_agent, $site_url ) ) {
+				$api_key = isset( $site['apiKey'] ) ? sanitize_text_field( $site['apiKey'] ) : '';
+
+				if ( hash_equals( $token, $api_key ) ) {
+					return true;
+				}
+			}
+		}   
+	}
+
 	return false;
 }
