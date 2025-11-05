@@ -98,4 +98,17 @@ class Utils {
 		$site_type = get_option( Constants::ONEACCESS_SITE_TYPE, '' );
 		return ! empty( $site_type );
 	}
+
+	/**
+	 * Get all available connected sites.
+	 * 
+	 * @return array List of connected site URLs.
+	 */
+	public static function get_connected_sites(): array {
+		$connected_sites = get_option( Constants::ONEACCESS_SHARED_SITES, array() );
+		if ( is_array( $connected_sites ) ) {
+			return $connected_sites;
+		}
+		return array();
+	}
 }
