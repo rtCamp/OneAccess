@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'ONEACCESS_PLUGIN_LOADER_VERSION', '1.0.0' );
-define( 'ONEACCESS_PLUGIN_LOADER_FEATURES_PATH',  untrailingslashit(plugin_dir_path( __FILE__ )) );
+define( 'ONEACCESS_PLUGIN_LOADER_FEATURES_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'ONEACCESS_PLUGIN_LOADER_RELATIVE_PATH', dirname( plugin_basename( __FILE__ ) ) );
 define( 'ONEACCESS_PLUGIN_LOADER_FEATURES_URL', untrailingslashit( plugin_dir_url( __FILE__ ) ) );
 define( 'ONEACCESS_PLUGIN_LOADER_BUILD_PATH', ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/assets/build' );
@@ -36,7 +36,7 @@ define( 'ONEACCESS_PLUGIN_LOADER_SLUG', 'oneaccess' );
 define( 'ONEACCESS_PLUGIN_TEMPLATES_PATH', ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/inc/templates' );
 
 
-if( ! file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/autoload.php' ) ) {
+if ( ! file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/autoload.php' ) ) {
 	// load template-functions file to use oneaccess_get_template_content function.
 	require_once ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/inc/helpers/template-functions.php';
 	
@@ -60,7 +60,7 @@ function oneaccess_plugin_loader(): void {
 	load_plugin_textdomain( 'oneaccess', false, ONEACCESS_PLUGIN_LOADER_RELATIVE_PATH . '/languages/' );
 
 	// if woocommerce action schedular is present into vendor then load it's file.
-	if( file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ){
+	if ( file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
 		require_once ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
 	}
 }
