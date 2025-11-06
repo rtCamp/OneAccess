@@ -42,8 +42,8 @@ if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 			'oneaccess_profile_requests',
 		);
 
+		global $wpdb;
 		foreach ( $tables_to_drop as $table ) {
-			global $wpdb;
 			$full_table_name = $wpdb->prefix . $table;
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- this is to drop table on uninstall
 		}
