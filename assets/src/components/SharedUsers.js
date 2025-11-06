@@ -499,6 +499,19 @@ const SharedUsers = ( { availableSites } ) => {
 		setPasswordStrength( strength );
 	}, [ password ] );
 
+	const isUserRoleChanged = () => {
+		return selectedUser?.sites?.some( ( site ) => {
+			// Get the current role key stored in state
+			const currentRoleInState = userRoles[ site.site_url ];
+
+			// Get the original role key from the user data
+			const originalRole = site.roles?.length > 0
+				? site.roles[ 0 ]
+				: ( Object.keys( AVAILABLE_ROLES ).find( ( key ) => AVAILABLE_ROLES[ key ] === site.role ) || 'subscriber' );
+
+			return currentRoleInState !== originalRole;
+		} );
+	};
 	return (
 		<>
 			<Card>
@@ -766,7 +779,7 @@ const SharedUsers = ( { availableSites } ) => {
 											</div>
 										</div>
 										<SelectControl
-											value={ userRoles[ site.site_url ] || site.role || '' }
+											value={ userRoles[ site.site_url ] || 'subscriber' }
 											options={ [
 												...Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
 													value: role,
@@ -795,7 +808,11 @@ const SharedUsers = ( { availableSites } ) => {
 							<Button
 								variant="primary"
 								onClick={ handleUpdateRoles }
-								disabled={ isUpdatingRoles || selectedUser.sites.every( ( site ) => userRoles[ site.site_url ] === site.role ) }
+								disabled={
+									isUpdatingRoles ||
+									userRoles.length === 0 ||
+									! isUserRoleChanged()
+								}
 								isBusy={ isUpdatingRoles }
 							>
 								<Dashicon icon="admin-users" style={ { marginRight: '8px' } } />
@@ -819,6 +836,9 @@ const SharedUsers = ( { availableSites } ) => {
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
 								{ __( 'Add user to additional sites: ', 'oneaccess' ) }
 								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
+							</p>
+							<p style={ { margin: 0, color: '#1f1c1a', fontSize: '16px', fontWeight: 600 } } >
+								{ __( 'Please note that this will be an async operation which will take a few minutes to complete.', 'oneaccess' ) }
 							</p>
 						</div>
 
