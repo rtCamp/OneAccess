@@ -947,12 +947,21 @@ class Actions {
 		$oneaccess_sites = $GLOBALS['oneaccess_sites'] ?? array();
 
 		// for each site fire action to rebuild index.
-		$results   = array();
-		$error_log = array();
+		$results         = array();
+		$error_log       = array();
+		$processed_sites = array();
 
 		foreach ( $oneaccess_sites as $site_config ) {
 			$site_url = $site_config['siteUrl'] ?? '';
 			$api_key  = $site_config['apiKey'] ?? '';
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
+				if ( ! empty( $site_url ) ) {
+					$processed_sites[] = $site_url;
+				}
+				continue;
+			}
 
 			if ( empty( $site_url ) ) {
 				continue;

@@ -450,10 +450,20 @@ class Users {
 
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$error_log            = array();
 		$user_delete_results  = array();
 
 		foreach ( $sites as $site ) {
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site['site_url'] ) || in_array( $site['site_url'], $processed_sites, true ) ) {
+				if ( ! empty( $site['site_url'] ) ) {
+					$processed_sites[] = $site['site_url'];
+				}
+				continue;
+			}
+
 			$request_url = $site['site_url'] . '/wp-json/' . self::NAMESPACE . '/delete-user';
 			$api_key     = $oneaccess_sites_info[ $site['site_url'] ]['apiKey'] ?? '';
 			$response    = wp_safe_remote_request(
@@ -709,6 +719,7 @@ class Users {
 
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$error_log            = array();
 
 		foreach ( $sites as $site_url ) {
@@ -721,6 +732,14 @@ class Users {
 						esc_html( $site_url['siteUrl'] ?? '' )
 					),
 				);
+				continue;
+			}
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url['siteUrl'] ) || in_array( $site_url['siteUrl'], $processed_sites, true ) ) {
+				if ( ! empty( $site_url['siteUrl'] ) ) {
+					$processed_sites[] = $site_url['siteUrl'];
+				}
 				continue;
 			}
 
@@ -885,6 +904,7 @@ class Users {
 
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$error_log            = array();
 		$db_results           = array();
 
@@ -892,6 +912,14 @@ class Users {
 			$site_url = $oneaccess_sites_info[ $key ]['siteUrl'] ?? '';
 			$api_key  = $oneaccess_sites_info[ $key ]['apiKey'] ?? '';
 			$new_role = $value;
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
+				if ( ! empty( $site_url ) ) {
+					$processed_sites[] = $site_url;
+				}
+				continue;
+			}
 
 			$request_url = $site_url . '/wp-json/' . self::NAMESPACE . '/update-user';
 
@@ -1337,11 +1365,21 @@ class Users {
 		}
 
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$response_data        = array();
 		$error_log            = array();
 
 		foreach ( $sites as $site ) {
-			$site_url  = $site['siteUrl'] ?? '';
+			$site_url = $site['siteUrl'] ?? '';
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
+				if ( ! empty( $site_url ) ) {
+					$processed_sites[] = $site_url;
+				}
+				continue;
+			}
+
 			$api_key   = $oneaccess_sites_info[ $site_url ]['apiKey'] ?? '';
 			$site_name = $oneaccess_sites_info[ $site_url ]['siteName'] ?? '';
 			if ( empty( $api_key ) ) {
