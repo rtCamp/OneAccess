@@ -75,8 +75,9 @@ function oneaccess_key_validation( $is_health_check ): bool {
 				 *
 				 * @hook oneaccess_governing_site_configured
 				 */
-				if ( function_exists( 'as_enqueue_async_action' ) ) {
-					as_enqueue_async_action(
+				if ( function_exists( 'as_schedule_single_action' ) ) {
+					as_schedule_single_action(
+						time() + MINUTE_IN_SECONDS,
 						'oneaccess_governing_site_configured',
 						array(),
 						'oneaccess'

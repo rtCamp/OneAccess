@@ -1143,7 +1143,7 @@ class Users {
 		$total_users = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared above.
 
 		// Build main query.
-		$query = "SELECT * FROM $table_name $where_clause ORDER BY updated_at DESC LIMIT %d OFFSET %d";
+		$query = "SELECT * FROM $table_name $where_clause ORDER BY created_at DESC LIMIT %d OFFSET %d";
 
 		// Add pagination values to prepare.
 		$prepare_values[] = $per_page;
