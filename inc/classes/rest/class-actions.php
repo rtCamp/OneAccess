@@ -484,7 +484,7 @@ class Actions {
 		$cursor = $request->get_param( 'cursor' );
 		$offset = ! empty( $cursor ) ? absint( $cursor ) : 0;
 
-		$full_sites             = $GLOBALS['oneaccess_sites'] ?? array();
+		$full_sites             = Utils::get_connected_sites();
 		$oneaccess_sites        = $full_sites; // Start with full list.
 		$processed_sites        = array();
 		$error_log              = array();
@@ -599,9 +599,12 @@ class Actions {
 					break;
 				}
 
-				// Add site_name to each request.
-				foreach ( $site_data['profile_requests'] as &$req ) {
-					$req['site_name'] = $site_name;
+				// Safe site_name addition.
+				foreach ( $site_data['profile_requests'] as $req ) {
+					// not using reference to avoid issues where different sites are having same results.
+					$new_req              = $req;
+					$new_req['site_name'] = $site_name;
+					$site_requests[]      = $new_req;
 				}
 
 				$site_requests = array_merge( $site_requests, $site_data['profile_requests'] );
@@ -618,7 +621,16 @@ class Actions {
 
 			$site_wise_total_counts[ $site_name ] = $site_total_count;
 			$all_profile_requests                 = array_merge( $all_profile_requests, $site_requests );
+			$site_requests                        = array();
 		}
+
+		// from all profile requests remove those which do not have site_name.
+		$all_profile_requests = array_filter(
+			$all_profile_requests,
+			function ( $req ): bool {
+				return isset( $req['site_name'] ) && ! empty( $req['site_name'] );
+			}
+		);
 
 		// Sort ALL results by created_at DESC.
 		usort(
@@ -669,6 +681,7 @@ class Actions {
 				'sites'                  => $available_sites,
 				'sites_queried'          => count( $processed_sites ),
 				'errors'                 => $error_log,
+				'all_profile_requests'   => $all_profile_requests,
 			),
 			200
 		);
