@@ -76,7 +76,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'add_deduplicated_users' ),
-				'permission_callback' => 'oneaccess_brand_site_to_governing_site_request_permission_check',
+				'permission_callback' => '\oneaccess_brand_site_to_governing_site_request_permission_check',
 				'args'                => array(
 					'users' => array(
 						'required'          => true,

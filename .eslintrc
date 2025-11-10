@@ -17,7 +17,8 @@
 	},
 	"rules": {
 		"jsdoc/check-indentation": "error",
-		"no-shadow": "warn"
+		"no-shadow": "warn",
+		"@wordpress/no-unsafe-wp-apis": "off" // need to remove in future when component is updated.
 	},
 	"overrides": [
 		{

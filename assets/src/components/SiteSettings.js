@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useEffect, useState, useCallback } from '@wordpress/element';
 import {
 	TextareaControl,

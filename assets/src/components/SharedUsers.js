@@ -15,9 +15,9 @@ import {
 	DropdownMenu,
 	CheckboxControl,
 	Notice,
-	__experimentalVStack as VStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
-	__experimentalHStack as HStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
-	__experimentalGrid as Grid, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalVStack as VStack,
+	__experimentalHStack as HStack,
+	__experimentalGrid as Grid,
 	Dashicon,
 	MenuGroup,
 	MenuItem,
@@ -46,6 +46,7 @@ const SharedUsers = ( { availableSites } ) => {
 	} );
 	const [ users, setUsers ] = useState( [] );
 	const [ searchTerm, setSearchTerm ] = useState( '' );
+	const [ debounceSearchTerm, setDebounceSearchTerm ] = useState( searchTerm );
 	const [ selectedSiteFilter, setSelectedSiteFilter ] = useState( '' );
 	const [ selectedUserRole, setSelectedUserRole ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
@@ -57,6 +58,7 @@ const SharedUsers = ( { availableSites } ) => {
 	const [ password, setPassword ] = useState( '' );
 	const [ showPassword, setShowPassword ] = useState( false );
 	const [ passwordStrength, setPasswordStrength ] = useState( '' );
+	const [ passwordNotice, setPasswordNotice ] = useState( null );
 	const passwordRef = useRef( password );
 
 	// Modal states
@@ -71,6 +73,17 @@ const SharedUsers = ( { availableSites } ) => {
 	const [ selectedSitesToDeleteUser, setSelectedSitesToDeleteUser ] = useState( [] );
 	const [ isDeletingUser, setIsDeletingUser ] = useState( false );
 
+	// debounce search query to improve performance.
+	useEffect( () => {
+		const timer = setTimeout( () => {
+			setDebounceSearchTerm( searchTerm );
+		}, 300 );
+
+		return () => {
+			clearTimeout( timer );
+		};
+	}, [ searchTerm ] );
+
 	const fetchUsers = useCallback( async () => {
 		setIsLoading( true );
 		try {
@@ -81,8 +94,8 @@ const SharedUsers = ( { availableSites } ) => {
 			} );
 
 			// Add optional filters
-			if ( searchTerm ) {
-				params.append( 'search_query', searchTerm );
+			if ( debounceSearchTerm ) {
+				params.append( 'search_query', debounceSearchTerm );
 			}
 			if ( selectedUserRole ) {
 				params.append( 'role', selectedUserRole );
@@ -156,7 +169,7 @@ const SharedUsers = ( { availableSites } ) => {
 		} finally {
 			setIsLoading( false );
 		}
-	}, [ page, searchTerm, selectedUserRole, selectedSiteFilter ] );
+	}, [ page, debounceSearchTerm, selectedUserRole, selectedSiteFilter ] );
 
 	useEffect( () => {
 		fetchUsers();
@@ -466,7 +479,7 @@ const SharedUsers = ( { availableSites } ) => {
 			);
 
 			if ( ! response.ok ) {
-				setNotice( {
+				setPasswordNotice( {
 					type: 'error',
 					message: __( 'Failed to generate password. Please try again later.', 'oneaccess' ),
 				} );
@@ -474,19 +487,19 @@ const SharedUsers = ( { availableSites } ) => {
 			}
 			const data = await response.json();
 			if ( ! data.password ) {
-				setNotice( {
+				setPasswordNotice( {
 					type: 'error',
 					message: __( 'No password generated. Please try again.', 'oneaccess' ),
 				} );
 				return '';
 			}
-			setNotice( {
+			setPasswordNotice( {
 				type: 'success',
 				message: __( 'Password generated successfully.', 'oneaccess' ),
 			} );
 			setPassword( data.password );
 		} catch ( error ) {
-			setNotice( {
+			setPasswordNotice( {
 				type: 'error',
 				message: __( 'Failed to generate a password. Please try again later.', 'oneaccess' ),
 			} );
@@ -827,10 +840,25 @@ const SharedUsers = ( { availableSites } ) => {
 			{ showAddToSitesModal && selectedUser && (
 				<Modal
 					title={ __( 'Add User to Sites', 'oneaccess' ) }
-					onRequestClose={ () => setShowAddToSitesModal( false ) }
+					onRequestClose={ () => {
+						setShowAddToSitesModal( false );
+						setPassword( '' );
+						setPasswordNotice( null );
+					} }
 					shouldCloseOnClickOutside={ true }
 					size="medium"
 				>
+					{ passwordNotice && (
+						<Notice
+							status={ passwordNotice.type === 'error' ? 'error' : 'success' }
+							isDismissible={ true }
+							onRemove={ () => setPasswordNotice( null ) }
+						>
+							<p style={ { margin: 0 } }>
+								{ passwordNotice.message }
+							</p>
+						</Notice>
+					) }
 					<VStack spacing="4">
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>

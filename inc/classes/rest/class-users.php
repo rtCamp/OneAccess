@@ -10,7 +10,6 @@ namespace OneAccess\REST;
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Plugin_Configs\DB;
 use OneAccess\Traits\Singleton;
-use OneAccess\Utils;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -277,7 +276,7 @@ class Users {
 					'user_id' => array(
 						'required'    => true,
 						'type'        => 'string',
-						'description' => __( 'The email of the user whose profile request is being approved.', 'oneaccess' ),
+						'description' => __( 'The user id of the user whose profile request is being approved.', 'oneaccess' ),
 					),
 				),
 			)

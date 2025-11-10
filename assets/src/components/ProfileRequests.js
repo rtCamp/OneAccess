@@ -8,7 +8,7 @@ import {
 	Snackbar,
 	Card,
 	CardBody,
-	__experimentalGrid as Grid, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalGrid as Grid,
 	SelectControl,
 	Button,
 	Modal,

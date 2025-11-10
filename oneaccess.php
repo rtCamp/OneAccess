@@ -85,8 +85,7 @@ register_activation_hook(
 		User_Roles::update_user_role_on_activation();
 
 		// Create database tables on activation.
-		DB::create_deduplicated_users_table();
-		DB::create_profile_requests_table();
+		DB::maybe_create_tables();
 	}
 );
 

@@ -35,6 +35,23 @@ class DB {
 	}
 
 	/**
+	 * Check if tables need to be created or updated.
+	 *
+	 * @return void
+	 */
+	public static function maybe_create_tables(): void {
+		$current_version = ONEACCESS_PLUGIN_LOADER_VERSION;
+		$db_version      = get_option( Constants::ONEACCESS_DB_VERSION, '0.0.0' );
+
+		if ( version_compare( $db_version, $current_version, '<' ) ) {
+			self::create_deduplicated_users_table();
+			self::create_profile_requests_table();
+
+			update_option( Constants::ONEACCESS_DB_VERSION, $current_version, false );
+		}
+	}
+
+	/**
 	 * Create database tables for storing de-duplicated users.
 	 *
 	 * @return void

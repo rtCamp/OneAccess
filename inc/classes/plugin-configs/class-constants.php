@@ -78,6 +78,13 @@ class Constants {
 	public const ONEACCESS_PROFILE_REQUESTS_TABLE = 'oneaccess_profile_requests';
 
 	/**
+	 * DB version.
+	 *
+	 * @var string
+	 */
+	public const ONEACCESS_DB_VERSION = 'oneaccess_db_version';
+
+	/**
 	 * Use Singleton trait.
 	 */
 	use Singleton;

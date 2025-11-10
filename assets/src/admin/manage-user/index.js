@@ -1,9 +1,15 @@
+/**
+ * WordPress dependencies
+ */
 import { createRoot, useState, useEffect, useCallback } from '@wordpress/element';
 import { Icon, plus, edit, people } from '@wordpress/icons';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
 import { Spinner, Snackbar } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
 import CreateUser from '../../components/CreateUser';
 import SharedUsers from '../../components/SharedUsers';
 import ProfileRequests from '../../components/ProfileRequests';

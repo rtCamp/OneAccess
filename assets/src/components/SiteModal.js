@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useState, useMemo } from '@wordpress/element';
 import {
 	Modal,
@@ -7,6 +10,10 @@ import {
 	Notice,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+
+/**
+ * Internal dependencies
+ */
 import { isValidUrl } from '../js/utils';
 
 const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, originalData = {} } ) => {
