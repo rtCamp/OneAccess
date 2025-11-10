@@ -58,7 +58,7 @@ class Users {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_user' ),
-					'permission_callback' => 'oneaccess_validate_api_key',
+					'permission_callback' => '\oneaccess_validate_api_key',
 					'args'                => array(
 						'username'  => array(
 							'required'    => true,
@@ -202,7 +202,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'update_user' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'email'    => array(
 						'required'          => true,
@@ -271,7 +271,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'approve_profile' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'user_id' => array(
 						'required'    => true,
@@ -291,7 +291,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'reject_profile' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'user_email'        => array(
 						'required'    => true,
@@ -345,7 +345,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'delete_user' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'email'    => array(
 						'required'          => true,

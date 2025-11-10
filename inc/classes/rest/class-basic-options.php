@@ -134,7 +134,7 @@ class Basic_Options {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'health_check' ),
-				'permission_callback' => 'oneaccess_validate_api_key_health_check',
+				'permission_callback' => '\oneaccess_validate_api_key_health_check',
 			)
 		);
 

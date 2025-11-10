@@ -68,7 +68,7 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
+						'Cache-Control': 'no-cache',
 					},
 				},
 			);

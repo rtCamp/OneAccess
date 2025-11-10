@@ -97,7 +97,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'send_users_for_deduplication' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 			)
 		);
 
@@ -154,7 +154,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_brand_site_profile_requests' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => $profile_request_args,
 			)
 		);
@@ -194,7 +194,7 @@ class Actions {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'rebuild_brand_sites_index' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 			),
 		);
 	}
@@ -421,11 +421,12 @@ class Actions {
 	 */
 	private function make_brand_site_request( string $site_url, string $api_key, array $query_params ) {
 
-		$request_url = trailingslashit( $site_url ) . 'wp-json/' . self::NAMESPACE . '/get-brand-site-profile-requests?' . http_build_query( $query_params );
+		$request_url = trailingslashit( $site_url ) . 'wp-json/' . self::NAMESPACE . '/get-brand-site-profile-requests?' . http_build_query( $query_params ) . '?time=' . time();
 
 		$args = array(
 			'headers' => array(
 				'X-OneAccess-Token' => $api_key,
+				'Cache-Control'     => 'no-cache',
 			),
 			'timeout' => 15,
 		);

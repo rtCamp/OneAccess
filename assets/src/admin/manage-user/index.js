@@ -37,6 +37,7 @@ const TabPanel = () => {
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
+						'Cache-Control': 'no-cache',
 					},
 				},
 			);
