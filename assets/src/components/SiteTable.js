@@ -38,7 +38,7 @@ const SiteTable = ( { sites, onEdit, onDelete, setFormData, setShowModal } ) => 
 				</Button>
 			</CardHeader>
 			<CardBody>
-				<table className="wp-list-table widefat fixed striped">
+				<table className="wp-list-table widefat fixed striped " style={ { marginTop: '16px' } }>
 					<thead>
 						<tr>
 							<th>{ __( 'Site Name', 'oneaccess' ) }</th>

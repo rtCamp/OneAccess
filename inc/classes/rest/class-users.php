@@ -844,6 +844,9 @@ class Users {
 			// split full name into first and last name.
 			$name_parts = explode( ' ', $full_name );
 
+			$first_name = $name_parts[0] ?? '';
+			$last_name  = isset( $name_parts[1] ) ? implode( ' ', array_slice( $name_parts, 1 ) ) : '';
+
 			$user_id   = isset( $response_body['data']['user_id'] ) ? absint( $response_body['data']['user_id'] ) : 0;
 			$user_role = isset( $response_body['data']['role'] ) ? sanitize_text_field( $response_body['data']['role'] ) : 'subscriber';
 

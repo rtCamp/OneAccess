@@ -314,7 +314,7 @@ const CreateUser = ( { availableSites } ) => {
 											}
 										} );
 									} }
-									style={ { width: 'fit-content' } }
+									style={ { width: 'fit-content', marginBlockStart: '12px' } }
 								>
 									{ __( 'Generate strong password', 'oneaccess' ) }
 								</Button>

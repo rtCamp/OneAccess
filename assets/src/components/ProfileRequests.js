@@ -391,7 +391,7 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 							__nextHasNoMarginBottom
 						/>
 					</Grid>
-					<table className="wp-list-table widefat fixed striped">
+					<table className="wp-list-table widefat fixed striped " style={ { marginTop: '16px' } }>
 						<thead>
 							<tr>
 								<th>{ __( 'Site', 'oneaccess' ) }</th>

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-11T11:47:45+00:00\n"
+"POT-Creation-Date: 2025-11-11T12:15:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 
@@ -215,7 +215,7 @@ msgstr ""
 #: inc/classes/rest/class-users.php:395
 #: inc/classes/rest/class-users.php:571
 #: inc/classes/rest/class-users.php:639
-#: inc/classes/rest/class-users.php:908
+#: inc/classes/rest/class-users.php:911
 msgid "User not found."
 msgstr ""
 
@@ -232,7 +232,7 @@ msgstr ""
 
 #: inc/classes/rest/class-users.php:444
 #: inc/classes/rest/class-users.php:746
-#: inc/classes/rest/class-users.php:1376
+#: inc/classes/rest/class-users.php:1379
 msgid "Invalid sites data."
 msgstr ""
 
@@ -299,109 +299,109 @@ msgstr ""
 msgid "User added successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:866
+#: inc/classes/rest/class-users.php:869
 msgid "User added to sites successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:896
+#: inc/classes/rest/class-users.php:899
 msgid "Email, username and role are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:931
-#: inc/classes/rest/class-users.php:1033
+#: inc/classes/rest/class-users.php:934
+#: inc/classes/rest/class-users.php:1036
 msgid "User role updated successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:952
+#: inc/classes/rest/class-users.php:955
 msgid "Email, username and roles are required."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:999
+#: inc/classes/rest/class-users.php:1002
 #, php-format
 msgid "Error updating user role on site %s."
 msgstr ""
 
 #. translators: %s is the site URL
-#: inc/classes/rest/class-users.php:1013
+#: inc/classes/rest/class-users.php:1016
 #, php-format
 msgid "Failed to update user role on site %s."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1025
+#: inc/classes/rest/class-users.php:1028
 msgid "Failed to update user role on site."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1044
+#: inc/classes/rest/class-users.php:1047
 #: assets/build/js/manage-user.js:1
 #: assets/src/components/SharedUsers.js:300
 msgid "User roles updated successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1075
+#: inc/classes/rest/class-users.php:1078
 msgid "Username, email, full name and password are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1085
+#: inc/classes/rest/class-users.php:1088
 msgid "Invalid email address."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1096
+#: inc/classes/rest/class-users.php:1099
 msgid "Username already exists, please user different username."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1107
+#: inc/classes/rest/class-users.php:1110
 msgid "Email already exists, please user different email."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1146
-#: inc/classes/rest/class-users.php:1500
+#: inc/classes/rest/class-users.php:1149
+#: inc/classes/rest/class-users.php:1503
 msgid "User created successfully."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1354
+#: inc/classes/rest/class-users.php:1357
 msgid "User data and sites are required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1365
+#: inc/classes/rest/class-users.php:1368
 msgid "Invalid user data."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1387
+#: inc/classes/rest/class-users.php:1390
 msgid "Username is required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1396
+#: inc/classes/rest/class-users.php:1399
 msgid "Please enter valid email id."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1405
+#: inc/classes/rest/class-users.php:1408
 msgid "Password is required."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1414
+#: inc/classes/rest/class-users.php:1417
 msgid "Full name is required."
 msgstr ""
 
 #. translators: %s is the site name
-#: inc/classes/rest/class-users.php:1443
+#: inc/classes/rest/class-users.php:1446
 #, php-format
 msgid "API key not found for site %s."
 msgstr ""
 
 #. translators: %s is the site name
-#: inc/classes/rest/class-users.php:1474
+#: inc/classes/rest/class-users.php:1477
 #, php-format
 msgid "Error creating user on site %s."
 msgstr ""
 
 #. translators: %s is the site name
-#: inc/classes/rest/class-users.php:1488
+#: inc/classes/rest/class-users.php:1491
 #, php-format
 msgid "Failed to create user on site %s."
 msgstr ""
 
-#: inc/classes/rest/class-users.php:1507
+#: inc/classes/rest/class-users.php:1510
 msgid "User creation process completed."
 msgstr ""
 
