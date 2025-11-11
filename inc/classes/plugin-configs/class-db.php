@@ -352,37 +352,34 @@ class DB {
 	}
 
 	/**
-	 * Check pending and rejected profile request to know which is latest.
+	 * Get the latest profile request by user ID.
+	 *
+	 * Returns the most recent request regardless of status (pending, rejected, or approved).
 	 *
 	 * @param int $user_id User ID.
 	 *
 	 * @return array|null
 	 */
 	public static function get_latest_profile_request_by_user_id( int $user_id ): ?array {
-		$pending_request  = self::get_pending_profile_request_by_user_id( $user_id );
-		$rejected_request = self::get_rejected_profile_request_by_user_id( $user_id );
+		global $wpdb;
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		if ( null === $pending_request && null === $rejected_request ) {
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM $table_name WHERE user_id = %d ORDER BY created_at DESC LIMIT 1",
+				$user_id
+			),
+			ARRAY_A
+		);
+
+		if ( null === $row ) {
 			return null;
 		}
 
-		if ( null !== $pending_request && null === $rejected_request ) {
-			return $pending_request;
-		}
+		// decode request_data.
+		$row['request_data'] = json_decode( $row['request_data'], true );
 
-		if ( null === $pending_request && null !== $rejected_request ) {
-			return $rejected_request;
-		}
-
-		// both are not null, compare created_at to know which is latest.
-		$pending_created_at  = strtotime( $pending_request['created_at'] );
-		$rejected_created_at = strtotime( $rejected_request['created_at'] );
-
-		if ( $pending_created_at >= $rejected_created_at ) {
-			return $pending_request;
-		} else {
-			return $rejected_request;
-		}
+		return $row;
 	}
 
 	/**
