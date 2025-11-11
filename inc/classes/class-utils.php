@@ -129,4 +129,51 @@ class Utils {
 
 		return $screen;
 	}
+
+	/**
+	 * Perform site health check by sending a request to the site's health endpoint.
+	 *
+	 * @param string $site_url The URL of the site to check.
+	 *
+	 * @return array An array containing the health status and message.
+	 */
+	public static function perform_site_health_check( string $site_url ): array {
+		$health_endpoint = trailingslashit( $site_url ) . 'wp-json/oneaccess/v1/health-check';
+
+		$api_key = isset( $GLOBALS['oneaccess_sites'][ $site_url ]['apiKey'] ) ? $GLOBALS['oneaccess_sites'][ $site_url ]['apiKey'] : '';
+
+		$response = wp_safe_remote_get(
+			$health_endpoint,
+			array(
+				'headers' => array(
+					'X-OneAccess-Token' => $api_key,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'healthy' => false,
+				'message' => $response->get_error_message(),
+			);
+		}
+
+		$code = wp_remote_retrieve_response_code( $response );
+
+		if ( 200 !== $code ) {
+			return array(
+				'healthy' => false,
+				'message' => sprintf(
+					/* translators: %s: HTTP status code. */
+					__( 'Unexpected response code: %s', 'oneaccess' ),
+					$code
+				),
+			);
+		}
+
+		return array(
+			'healthy' => true,
+			'message' => __( 'Site is healthy.', 'oneaccess' ),
+		);
+	}
 }

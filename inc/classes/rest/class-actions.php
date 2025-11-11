@@ -846,10 +846,11 @@ class Actions {
 
 		// If no connected sites, we can't proceed safely.
 		if ( empty( $connected_site_urls ) ) {
+
 			return new WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'No connected sites found in global configuration.', 'oneaccess' ),
+					'message' => __( 'Removed all entries as no connected sites found.', 'oneaccess' ),
 				),
 				400
 			);

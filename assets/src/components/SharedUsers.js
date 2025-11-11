@@ -184,7 +184,7 @@ const SharedUsers = ( { availableSites } ) => {
 
 	// Get sites available for adding (sites user is not already assigned to)
 	const getAvailableSitesForUser = ( user ) => {
-		const userSiteUrls = user.sites?.map( ( site ) => site.site_url ) || [];
+		const userSiteUrls = user.sites?.map( ( site ) => site.siteUrl ) || [];
 		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.siteUrl ) );
 	};
 
@@ -405,7 +405,7 @@ const SharedUsers = ( { availableSites } ) => {
 			} else {
 				setNotice( {
 					type: 'success',
-					message: __( 'Disconnected sites users cleanup completed successfully.', 'oneaccess' ),
+					message: __( 'Async action is scheduled to do cleanup of disconnected sites users.', 'oneaccess' ),
 				} );
 				// Refresh users list
 				await fetchUsers();
@@ -451,7 +451,7 @@ const SharedUsers = ( { availableSites } ) => {
 			} else {
 				setNotice( {
 					type: 'success',
-					message: __( 'Deduplicated users index rebuilt successfully.', 'oneaccess' ),
+					message: __( 'Async action is scheduled to rebuild deduplicated users index.', 'oneaccess' ),
 				} );
 			}
 		} catch ( error ) {
@@ -564,6 +564,8 @@ const SharedUsers = ( { availableSites } ) => {
 							value={ searchTerm }
 							onChange={ ( value ) => setSearchTerm( value ) }
 							label={ __( 'Search Users', 'oneaccess' ) }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 						<SelectControl
 							label={ __( 'Filter by site', 'oneaccess' ) }
@@ -576,6 +578,8 @@ const SharedUsers = ( { availableSites } ) => {
 								} ) ),
 							] }
 							onChange={ setSelectedSiteFilter }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 						<SelectControl
 							label={ __( 'Filter by role', 'oneaccess' ) }
@@ -588,6 +592,8 @@ const SharedUsers = ( { availableSites } ) => {
 								} ) ),
 							] }
 							onChange={ setSelectedUserRole }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 					</Grid>
 
@@ -805,6 +811,8 @@ const SharedUsers = ( { availableSites } ) => {
 													[ site.site_url ]: value,
 												} ) );
 											} }
+											__next40pxDefaultSize
+											__nextHasNoMarginBottom
 										/>
 									</div>
 								) ) }
@@ -891,6 +899,7 @@ const SharedUsers = ( { availableSites } ) => {
 												);
 											}
 										} }
+										__nextHasNoMarginBottom
 									/>
 									<Button
 										variant="link"
@@ -954,6 +963,7 @@ const SharedUsers = ( { availableSites } ) => {
 																] );
 															}
 														} }
+														__nextHasNoMarginBottom
 													/>
 
 													{ isSelected && (
@@ -974,6 +984,8 @@ const SharedUsers = ( { availableSites } ) => {
 																		),
 																	);
 																} }
+																__next40pxDefaultSize
+																__nextHasNoMarginBottom
 															/>
 														</div>
 													) }
@@ -1061,6 +1073,7 @@ const SharedUsers = ( { availableSites } ) => {
 												);
 											}
 										} }
+										__nextHasNoMarginBottom
 									/>
 									<Button
 										variant="link"
@@ -1143,6 +1156,7 @@ const SharedUsers = ( { availableSites } ) => {
 															</div>
 														}
 														checked={ isSelected }
+														__nextHasNoMarginBottom
 													/>
 												</div>
 											);
@@ -1193,7 +1207,7 @@ const SharedUsers = ( { availableSites } ) => {
 				>
 					<VStack spacing="4">
 						<p style={ { color: '#6c757d', fontSize: '14px' } }>
-							{ __( 'Are you sure you want to cleanup users associated with disconnected sites? This action cannot be undone.', 'oneaccess' ) }
+							{ __( 'Cleaning up users associated with disconnected sites is an async process that may take some time to complete and cannot be undone. Are you sure you want to proceed?', 'oneaccess' ) }
 						</p>
 						<HStack justify="flex-end" spacing="3">
 							<Button

@@ -371,18 +371,24 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 							value={ searchTerm }
 							onChange={ setSearchTerm }
 							label={ __( 'Search Requests', 'oneaccess' ) }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 						<SelectControl
 							label={ __( 'Filter by site', 'oneaccess' ) }
 							value={ selectedSiteFilter }
 							options={ siteOptions }
 							onChange={ setSelectedSiteFilter }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 						<SelectControl
 							label={ __( 'Filter by status', 'oneaccess' ) }
 							value={ requestStatusFilter }
 							options={ statusOptions }
 							onChange={ setRequestStatusFilter }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 					</Grid>
 					<table className="wp-list-table widefat fixed striped">
@@ -538,6 +544,7 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 						value={ rejectionComment }
 						onChange={ setRejectionComment }
 						rows={ 4 }
+						__nextHasNoMarginBottom
 					/>
 					<div style={ { marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' } }>
 						<Button

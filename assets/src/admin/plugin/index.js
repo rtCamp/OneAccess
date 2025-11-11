@@ -22,6 +22,8 @@ const SiteTypeSelector = ( { value, setSiteType } ) => (
 			{ label: __( 'Brand Site', 'oneaccess' ), value: 'brand-site' },
 			{ label: __( 'Governing Site', 'oneaccess' ), value: 'governing-site' },
 		] }
+		__next40pxDefaultSize
+		__nextHasNoMarginBottom
 	/>
 );
 

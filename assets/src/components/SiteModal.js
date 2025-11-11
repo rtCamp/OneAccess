@@ -160,13 +160,17 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 				onChange={ ( value ) => setFormData( { ...formData, siteName: value } ) }
 				error={ errors.siteName }
 				help={ __( 'This is the name of the site that will be registered.', 'oneaccess' ) }
+				__next40pxDefaultSize
+				__nextHasNoMarginBottom
 			/>
 			<TextControl
 				label={ __( 'Site URL*', 'oneaccess' ) }
 				value={ formData.siteUrl }
 				onChange={ ( value ) => setFormData( { ...formData, siteUrl: value } ) }
 				error={ errors.siteUrl }
-				help={ __( 'It must start with http or https and end with /, like: https://oneaccess.com/', 'oneaccess' ) }
+				help={ __( 'It must start with http or https and end with /, like: https://rtcamp.com/', 'oneaccess' ) }
+				__next40pxDefaultSize
+				__nextHasNoMarginBottom
 			/>
 			<TextareaControl
 				label={ __( 'API Key*', 'oneaccess' ) }
@@ -174,6 +178,7 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 				onChange={ ( value ) => setFormData( { ...formData, apiKey: value } ) }
 				error={ errors.apiKey }
 				help={ __( 'This is the api key that will be used to authenticate the site for OneAccess.', 'oneaccess' ) }
+				__nextHasNoMarginBottom
 			/>
 
 			<Button

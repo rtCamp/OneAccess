@@ -628,13 +628,19 @@ class Users {
 		// Get the user by user_login.
 		$user = get_user_by( 'id', $user_id );
 		if ( ! $user ) {
-			return new \WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => __( 'User not found.', 'oneaccess' ),
-				),
-				404
-			);
+
+			$user = get_user_by( 'email', $user_email );
+
+			if ( ! $user ) {
+
+				return new \WP_REST_Response(
+					array(
+						'success' => false,
+						'message' => __( 'User not found.', 'oneaccess' ),
+					),
+					404
+				);
+			}
 		}
 
 		// get user profile request data.
@@ -658,6 +664,33 @@ class Users {
 			$user_data = $profile_requests_data['request_data']['data'] ?? array();
 
 			foreach ( $user_data as $key => $value ) {
+
+				if ( 'email' === $key ) {
+					wp_update_user(
+						array(
+							'ID'         => $user->ID,
+							'user_email' => $value['new'],
+						)
+					);
+					continue;
+				} elseif ( 'username' === $key ) {
+					wp_update_user(
+						array(
+							'ID'            => $user->ID,
+							'user_nicename' => $value['new'],
+						)
+					);
+					continue;
+				} elseif ( 'url' === $key ) {
+					wp_update_user(
+						array(
+							'ID'       => $user->ID,
+							'user_url' => $value['new'],
+						)
+					);
+					continue;
+				}
+
 				wp_update_user(
 					array(
 						'ID' => $user->ID,
@@ -804,6 +837,27 @@ class Users {
 				'status'  => 'success',
 				'message' => __( 'User added successfully.', 'oneaccess' ),
 			);
+
+			$first_name = '';
+			$last_name  = '';
+
+			// split full name into first and last name.
+			$name_parts = explode( ' ', $full_name );
+
+			$user_id   = isset( $response_body['data']['user_id'] ) ? absint( $response_body['data']['user_id'] ) : 0;
+			$user_role = isset( $response_body['data']['role'] ) ? sanitize_text_field( $response_body['data']['role'] ) : 'subscriber';
+
+			// add user to deduplicated users table.
+			DB::add_user_to_deduplicated_users(
+				$email,
+				$first_name,
+				$last_name,
+				$site_url['siteName'] ?? '',
+				$site_url['siteUrl'] ?? '',
+				$user_id,
+				array( $user_role ),
+			);
+
 		}
 
 		return new \WP_REST_Response(

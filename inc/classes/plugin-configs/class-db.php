@@ -573,4 +573,87 @@ class DB {
 
 		return $response;
 	}
+
+	/**
+	 * Add user to deduplicated users table.
+	 *
+	 * @param string $email User email.
+	 * @param string $first_name User first name.
+	 * @param string $last_name User last name.
+	 * @param string $site_name Site name.
+	 * @param string $site_url Site URL.
+	 * @param int    $user_id User ID on the site.
+	 * @param array  $roles User roles on the site.
+	 *
+	 * @return int|false
+	 */
+	public static function add_user_to_deduplicated_users(
+		string $email,
+		string $first_name,
+		string $last_name,
+		string $site_name,
+		string $site_url,
+		int $user_id,
+		array $roles,
+	): int|false {
+
+		// get user by email.
+		global $wpdb;
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+
+		$response = false;
+
+		$user = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM $table_name WHERE email = %s",
+				$email
+			)
+		);
+
+		if ( $user ) {
+			// user exists, update sites_info.
+			$existing_sites_info = json_decode( $user->sites_info, true );
+			if ( ! is_array( $existing_sites_info ) ) {
+				$existing_sites_info = array();
+			}
+
+			// check if site already exists.
+			$site_exists = false;
+			foreach ( $existing_sites_info as $site_info ) {
+				if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $site_url ) ) {
+					$site_exists = true;
+					break;
+				}
+			}
+
+			if ( ! $site_exists ) {
+				$existing_sites_info[] = array(
+					'site_name' => $site_name,
+					'site_url'  => $site_url,
+					'user_id'   => $user_id,
+					'roles'     => $roles,
+				);
+
+				$response = $wpdb->update(
+					$table_name,
+					array(
+						'first_name' => $first_name,
+						'last_name'  => $last_name,
+						'sites_info' => wp_json_encode( $existing_sites_info ),
+						'updated_at' => current_time( 'mysql' ),
+					),
+					array( 'id' => $user->id ),
+					array(
+						'%s',
+						'%s',
+						'%s',
+						'%s',
+					),
+					array( '%d' ),
+				);
+			}
+		}
+
+		return $response;
+	}
 }
