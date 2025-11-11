@@ -184,7 +184,7 @@ const SharedUsers = ( { availableSites } ) => {
 
 	// Get sites available for adding (sites user is not already assigned to)
 	const getAvailableSitesForUser = ( user ) => {
-		const userSiteUrls = user.sites?.map( ( site ) => site.siteUrl ) || [];
+		const userSiteUrls = user.sites?.map( ( site ) => site.siteUrl || site.site_url ) || [];
 		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.siteUrl ) );
 	};
 
