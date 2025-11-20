@@ -1224,7 +1224,7 @@ class Users {
 			$count_query = $wpdb->prepare( $count_query, $prepare_values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared here.
 		}
 
-		$total_users = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared above.
+		$total_users = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- query is prepared above.
 
 		// Build main query.
 		$query = "SELECT * FROM $table_name $where_clause ORDER BY created_at DESC LIMIT %d OFFSET %d";
@@ -1235,7 +1235,7 @@ class Users {
 
 		// Prepare and execute query.
 		$prepared_query = $wpdb->prepare( $query, $prepare_values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared here.
-		$users          = $wpdb->get_results( $prepared_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared above.
+		$users          = $wpdb->get_results( $prepared_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- query is prepared above.
 
 		// Process users data - decode sites_info.
 		$processed_users = array();

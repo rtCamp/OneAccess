@@ -9,7 +9,6 @@ namespace OneAccess\REST;
 
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Traits\Singleton;
-use OneAccess\Utils;
 
 /**
  * Class Brand_Site
@@ -236,9 +235,8 @@ class Brand_Site {
 		if ( is_wp_error( $reponse ) || 200 !== wp_remote_retrieve_response_code( $reponse ) ) {
 			return new \WP_REST_Response(
 				array(
-					'success'  => false,
-					'message'  => __( 'Failed to approve profile request.', 'oneaccess' ),
-					'response' => $reponse,
+					'success' => false,
+					'message' => __( 'Failed to approve profile request.', 'oneaccess' ),
 				),
 				500
 			);

@@ -336,7 +336,7 @@ class Actions {
 					'Content-Type'      => 'application/json',
 					'X-OneAccess-Token' => get_option( Constants::ONEACCESS_API_KEY, '' ),
 				),
-				'timeout' => 30,
+				'timeout' => 30, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout -- user creation on multiple sites take time.
 			)
 		);
 	}
@@ -428,7 +428,7 @@ class Actions {
 				'X-OneAccess-Token' => $api_key,
 				'Cache-Control'     => 'no-cache',
 			),
-			'timeout' => 15,
+			'timeout' => 30, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout -- profile requests fetching take time.
 		);
 
 		$response = wp_safe_remote_get( $request_url, $args );
@@ -752,16 +752,16 @@ class Actions {
 
 		// Then prepare with params.
 		$count_query = $wpdb->prepare( $count_query, $where_clause['params'] ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- parameters are prepared.
-		$total_count = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- parameters are already prepared.
+		$total_count = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- parameters are already prepared.
 
 		// Prepare and execute main query with ORDER BY created_at DESC.
 		$params = array_merge( $where_clause['params'], array( self::RESULTS_LIMIT, $offset ) );
 		$query  = $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- parameters are correct used spread on array.
-			"SELECT * FROM `{$table_name}` WHERE {$where_clause['sql']} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+			"SELECT * FROM `{$table_name}` WHERE {$where_clause['sql']} ORDER BY created_at DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is safe.
 			...$params
 		);
 
-		$results = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is already prepared.
+		$results = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- query is already prepared.
 
 		// Decode request_data JSON field.
 		foreach ( $results as &$result ) {
@@ -864,9 +864,9 @@ class Actions {
 
 		do {
 			// Get batch of users.
-			$users = $wpdb->get_results(
+			$users = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 				$wpdb->prepare(
-					"SELECT id, sites_info FROM {$table_name} ORDER BY id LIMIT %d OFFSET %d",
+					"SELECT id, sites_info FROM {$table_name} ORDER BY id LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 					$batch_size,
 					$offset
 				),
@@ -902,7 +902,7 @@ class Actions {
 
 				// If no sites remain, delete the user row.
 				if ( empty( $filtered_sites ) ) {
-					$wpdb->delete(
+					$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 						$table_name,
 						array( 'id' => $user_id ),
 						array( '%d' )
@@ -910,7 +910,7 @@ class Actions {
 					++$deleted_count;
 				} elseif ( count( $filtered_sites ) !== count( $sites_info ) ) {
 					// Sites were removed, update the row.
-					$wpdb->update(
+					$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 						$table_name,
 						array(
 							'sites_info' => wp_json_encode( $filtered_sites ),
@@ -989,7 +989,7 @@ class Actions {
 					'headers' => array(
 						'X-OneAccess-Token' => $api_key,
 					),
-					'timeout' => 30,
+					'timeout' => 30, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout -- rebuilding index take time.
 				)
 			);
 

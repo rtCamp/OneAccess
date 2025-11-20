@@ -112,122 +112,218 @@ class DB {
 	 * @return void
 	 */
 	public static function add_deduplicated_users( array $user_data ): void {
-		global $wpdb;
-		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
-
-		// check if user with same email already exists then into sites_info add site information on which its present.
 		foreach ( $user_data as $user ) {
 			$user_email = $user['email'] ?? '';
 			if ( empty( $user_email ) ) {
 				continue;
 			}
 
-			// check if same email user already exists or not.
-			$existing_user = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT * FROM $table_name WHERE email = %s",
-					$user_email
-				)
-			);
+			self::process_user( $user_email, $user );
+		}
+	}
 
-			if ( $existing_user ) {
+	/**
+	 * Process a single user for deduplication.
+	 *
+	 * @param string $user_email User email.
+	 * @param array  $user User data.
+	 *
+	 * @return void
+	 */
+	private static function process_user( string $user_email, array $user ): void {
+		global $wpdb;
+		$table_name = self::get_table_name();
 
-				// get existing sites_info and decode it.
-				$existing_sites_info = json_decode( $existing_user->sites_info, true );
-				if ( ! is_array( $existing_sites_info ) ) {
-					$existing_sites_info = array();
-				}
+		$existing_user = self::get_existing_user( $user_email, $table_name );
 
-				// check if same site info already exists or not.
-				$new_site_info = array(
-					'site_name' => $user['site_name'] ?? '',
-					'site_url'  => $user['site_url'] ?? '',
-					'user_id'   => $user['user_id'] ?? '',
-					'roles'     => $user['roles'] ?? array(),
-				);
+		if ( $existing_user ) {
+			self::update_existing_user( $existing_user, $user, $table_name );
+		} else {
+			self::insert_new_user( $user_email, $user, $table_name );
+		}
+	}
 
-				$site_exists = false;
-				foreach ( $existing_sites_info as $site_info ) {
-					if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $new_site_info['site_url'] ) ) {
-						$site_exists = true;
-						break;
-					}
-				}
+	/**
+	 * Get the deduplicated users table name.
+	 *
+	 * @return string
+	 */
+	private static function get_table_name(): string {
+		global $wpdb;
+		return $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+	}
 
-				if ( ! $site_exists ) {
-					$existing_sites_info[] = $new_site_info;
+	/**
+	 * Get existing user by email.
+	 *
+	 * @param string $user_email User email.
+	 * @param string $table_name Table name.
+	 *
+	 * @return object|null
+	 */
+	private static function get_existing_user( string $user_email, string $table_name ) {
+		global $wpdb;
+		return $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
+			$wpdb->prepare(
+				"SELECT * FROM $table_name WHERE email = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
+				$user_email
+			)
+		);
+	}
 
-					// update the existing user record.
-					$wpdb->update(
-						$table_name,
-						array(
-							'sites_info' => wp_json_encode( $existing_sites_info ),
-							'updated_at' => current_time( 'mysql' ),
-						),
-						array( 'id' => $existing_user->id ),
-						array(
-							'%s',
-							'%s',
-						),
-						array( '%d' )
-					);
-				} else {
-					// update site_info with latest information.
-					foreach ( $existing_sites_info as $site_info ) {
-						if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $new_site_info['site_url'] ) ) {
-							$site_info['site_name'] = $new_site_info['site_name'];
-							$site_info['user_id']   = $new_site_info['user_id'];
-							$site_info['roles']     = $new_site_info['roles'];
-							break;
-						}
-					}
-					// update the existing user record.
-					$wpdb->update(
-						$table_name,
-						array(
-							'sites_info' => wp_json_encode( $existing_sites_info ),
-							'updated_at' => current_time( 'mysql' ),
-						),
-						array( 'id' => $existing_user->id ),
-						array(
-							'%s',
-							'%s',
-						),
-						array( '%d' )
-					);
-				}
-			} else {
-				// insert new user record.
-				$sites_info = array(
-					array(
-						'site_name' => $user['site_name'] ?? '',
-						'site_url'  => $user['site_url'] ?? '',
-						'user_id'   => $user['user_id'] ?? '',
-						'roles'     => $user['roles'] ?? array(),
-					),
-				);
+	/**
+	 * Update existing user with new site info.
+	 *
+	 * @param object $existing_user Existing user object.
+	 * @param array  $user New user data.
+	 * @param string $table_name Table name.
+	 *
+	 * @return void
+	 */
+	private static function update_existing_user( $existing_user, array $user, string $table_name ): void {
+		$existing_sites_info = self::decode_sites_info( $existing_user->sites_info );
+		$new_site_info       = self::build_site_info( $user );
 
-				$wpdb->insert(
-					$table_name,
-					array(
-						'email'      => $user_email,
-						'first_name' => $user['first_name'] ?? '',
-						'last_name'  => $user['last_name'] ?? '',
-						'sites_info' => wp_json_encode( $sites_info ),
-						'created_at' => current_time( 'mysql' ),
-						'updated_at' => current_time( 'mysql' ),
-					),
-					array(
-						'%s',
-						'%s',
-						'%s',
-						'%s',
-						'%s',
-						'%s',
-					)
-				);
+		$site_exists = self::check_site_exists( $existing_sites_info, $new_site_info );
+
+		if ( ! $site_exists ) {
+			$existing_sites_info[] = $new_site_info;
+		} else {
+			$existing_sites_info = self::update_site_info( $existing_sites_info, $new_site_info );
+		}
+
+		self::save_updated_user( $existing_user->id, $existing_sites_info, $table_name );
+	}
+
+	/**
+	 * Decode sites info JSON.
+	 *
+	 * @param string $sites_info_json Sites info in JSON format.
+	 *
+	 * @return array
+	 */
+	private static function decode_sites_info( $sites_info_json ): array {
+		$existing_sites_info = json_decode( $sites_info_json, true );
+		if ( ! is_array( $existing_sites_info ) ) {
+			$existing_sites_info = array();
+		}
+		return $existing_sites_info;
+	}
+
+	/**
+	 * Build site info array from user data.
+	 *
+	 * @param array $user User data.
+	 *
+	 * @return array
+	 */
+	private static function build_site_info( array $user ): array {
+		return array(
+			'site_name' => $user['site_name'] ?? '',
+			'site_url'  => $user['site_url'] ?? '',
+			'user_id'   => $user['user_id'] ?? '',
+			'roles'     => $user['roles'] ?? array(),
+		);
+	}
+
+	/**
+	 * Check if site already exists in existing sites info.
+	 *
+	 * @param array $existing_sites_info Existing sites info.
+	 * @param array $new_site_info New site info.
+	 *
+	 * @return bool
+	 */
+	private static function check_site_exists( array $existing_sites_info, array $new_site_info ): bool {
+		foreach ( $existing_sites_info as $site_info ) {
+			if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $new_site_info['site_url'] ) ) {
+				return true;
 			}
 		}
+		return false;
+	}
+
+	/**
+	 * Update site info in existing sites info.
+	 *
+	 * @param array $existing_sites_info Existing sites info.
+	 * @param array $new_site_info New site info.
+	 *
+	 * @return array
+	 */
+	private static function update_site_info( array $existing_sites_info, array $new_site_info ): array {
+		foreach ( $existing_sites_info as &$site_info ) {
+			if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $new_site_info['site_url'] ) ) {
+				$site_info['site_name'] = $new_site_info['site_name'];
+				$site_info['user_id']   = $new_site_info['user_id'];
+				$site_info['roles']     = $new_site_info['roles'];
+				break;
+			}
+		}
+		return $existing_sites_info;
+	}
+
+	/**
+	 * Save updated user data to the database.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param array  $sites_info Updated sites info.
+	 * @param string $table_name Table name.
+	 *
+	 * @return void
+	 */
+	private static function save_updated_user( int $user_id, array $sites_info, string $table_name ): void {
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
+			$table_name,
+			array(
+				'sites_info' => wp_json_encode( $sites_info ),
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $user_id ),
+			array(
+				'%s',
+				'%s',
+			),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Insert new user into the database.
+	 *
+	 * @param string $user_email User email.
+	 * @param array  $user User data.
+	 * @param string $table_name Table name.
+	 *
+	 * @return void
+	 */
+	private static function insert_new_user( string $user_email, array $user, string $table_name ): void {
+		global $wpdb;
+
+		$sites_info = array(
+			self::build_site_info( $user ),
+		);
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
+			$table_name,
+			array(
+				'email'      => $user_email,
+				'first_name' => $user['first_name'] ?? '',
+				'last_name'  => $user['last_name'] ?? '',
+				'sites_info' => wp_json_encode( $sites_info ),
+				'created_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array(
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+			)
+		);
 	}
 
 	/**
@@ -243,7 +339,7 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$wpdb->insert(
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$table_name,
 			array(
 				'user_id'      => $user_id,
@@ -274,7 +370,7 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$wpdb->update(
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$table_name,
 			array(
 				'status'     => $status,
@@ -302,9 +398,9 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$row = $wpdb->get_row(
+		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE user_id = %d AND status = %s ORDER BY created_at DESC LIMIT 1",
+				"SELECT * FROM $table_name WHERE user_id = %d AND status = %s ORDER BY created_at DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$user_id,
 				'pending'
 			),
@@ -332,9 +428,9 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$row = $wpdb->get_row(
+		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE user_id = %d AND status = %s ORDER BY created_at DESC LIMIT 1",
+				"SELECT * FROM $table_name WHERE user_id = %d AND status = %s ORDER BY created_at DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$user_id,
 				'rejected'
 			),
@@ -364,9 +460,9 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$row = $wpdb->get_row(
+		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE user_id = %d ORDER BY created_at DESC LIMIT 1",
+				"SELECT * FROM $table_name WHERE user_id = %d ORDER BY created_at DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$user_id
 			),
 			ARRAY_A
@@ -393,9 +489,9 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$row = $wpdb->get_row(
+		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE id = %d",
+				"SELECT * FROM $table_name WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$request_id
 			),
 			ARRAY_A
@@ -433,7 +529,7 @@ class DB {
 		global $wpdb;
 		$table_name = $wpdb->prefix . Constants::ONEACCESS_PROFILE_REQUESTS_TABLE;
 
-		$wpdb->update(
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$table_name,
 			array(
 				'status'     => 'rejected',
@@ -465,9 +561,9 @@ class DB {
 		$response = false;
 
 		// Get existing user record.
-		$existing_user = $wpdb->get_row(
+		$existing_user = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE email = %s",
+				"SELECT * FROM $table_name WHERE email = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$email
 			)
 		);
@@ -489,14 +585,14 @@ class DB {
 
 			if ( empty( $updated_sites_info ) ) {
 				// If no sites left, delete the user record.
-				$response = $wpdb->delete(
+				$response = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 					$table_name,
 					array( 'id' => $existing_user->id ),
 					array( '%d' )
 				);
 			} else {
 				// Update the user record with updated sites_info.
-				$response = $wpdb->update(
+				$response = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 					$table_name,
 					array(
 						'sites_info' => wp_json_encode( array_values( $updated_sites_info ) ),
@@ -530,9 +626,9 @@ class DB {
 
 		$response = false;
 		// Get existing user record.
-		$existing_user = $wpdb->get_row(
+		$existing_user = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE email = %s",
+				"SELECT * FROM $table_name WHERE email = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$email
 			)
 		);
@@ -553,7 +649,7 @@ class DB {
 			}
 
 			// Update the user record with updated sites_info.
-			$response = $wpdb->update(
+			$response = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 				$table_name,
 				array(
 					'sites_info' => wp_json_encode( $existing_sites_info ),
@@ -600,9 +696,9 @@ class DB {
 
 		$response = false;
 
-		$user = $wpdb->get_row(
+		$user = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE email = %s",
+				"SELECT * FROM $table_name WHERE email = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- safe usage.
 				$email
 			)
 		);
@@ -631,7 +727,7 @@ class DB {
 					'roles'     => $roles,
 				);
 
-				$response = $wpdb->update(
+				$response = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- safe usage.
 					$table_name,
 					array(
 						'first_name' => $first_name,

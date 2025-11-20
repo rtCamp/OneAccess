@@ -17,9 +17,6 @@
  * @package OneAccess
  */
 
-use OneAccess\User_Roles;
-use OneAccess\Plugin_Configs\DB;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -37,10 +34,39 @@ define( 'ONEACCESS_PLUGIN_TEMPLATES_PATH', ONEACCESS_PLUGIN_LOADER_FEATURES_PATH
 
 
 if ( ! file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/autoload.php' ) ) {
-	// load template-functions file to use oneaccess_get_template_content function.
-	require_once ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/inc/helpers/template-functions.php';
 
-	echo oneaccess_get_template_content( 'notices/no-assets' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- we are escaping the output in the template file.
+	$message  = '<p>';
+	$message .= sprintf(
+		/* translators: %s is the plugin name. */
+		esc_html__( 'You are running the %s plugin from the GitHub repository. Please build the assets and install composer dependencies to use the plugin.', 'oneaccess' ),
+		'<strong>' . esc_html__( 'OneAccess', 'oneaccess' ) . '</strong>'
+	);
+	$message .= '</p><p>';
+	$message .= sprintf(
+		/* translators: %s is the command to run. */
+		esc_html__( 'Run the following commands in the plugin directory: %s', 'oneaccess' ),
+		'<code>composer install && npm install && npm run build:prod</code>'
+	);
+	$message .= '</p><p>';
+	$message .= sprintf(
+		/* translators: %s is the plugin name. */
+		esc_html__( 'Please refer to the %s for more information.', 'oneaccess' ),
+		sprintf(
+			'<a href="%s" target="_blank">%s</a>',
+			esc_url( 'https://github.com/rtCamp/OneAccess' ),
+			esc_html__( 'OneAccess GitHub repository', 'oneaccess' )
+		)
+	);
+	$message .= '</p>';
+
+	wp_admin_notice(
+		$message,
+		array(
+			'type'        => 'error',
+			'dismissible' => false,
+		)
+	);
+
 	return;
 }
 
@@ -58,11 +84,6 @@ function oneaccess_plugin_loader(): void {
 
 	// load plugin text domain.
 	load_plugin_textdomain( 'oneaccess', false, ONEACCESS_PLUGIN_LOADER_RELATIVE_PATH . '/languages/' );
-
-	// if woocommerce action schedular is present into vendor then load it's file.
-	if ( file_exists( ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/woocommerce/action-scheduler/action-scheduler.php' ) ) {
-		require_once ONEACCESS_PLUGIN_LOADER_FEATURES_PATH . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
-	}
 }
 
 add_action( 'plugins_loaded', 'oneaccess_plugin_loader', -10 ); // added -10 to make sure action scheduler is loaded on 0 priority.
@@ -74,18 +95,18 @@ register_activation_hook(
 	ONEACCESS_PLUGIN_LOADER_PLUGIN_BASENAME,
 	function (): void {
 
-		if ( ! class_exists( User_Roles::class ) && ! class_exists( DB::class ) ) {
+		if ( ! class_exists( '\OneAccess\User_Roles' ) && ! class_exists( '\OneAccess\Plugin_Configs\DB' ) ) {
 			return;
 		}
 
-		User_Roles::create_brand_admin_role();
-		User_Roles::create_network_admin_role();
+		\OneAccess\User_Roles::create_brand_admin_role();
+		\OneAccess\User_Roles::create_network_admin_role();
 
 		// Update user role on activation.
-		User_Roles::update_user_role_on_activation();
+		\OneAccess\User_Roles::update_user_role_on_activation();
 
 		// Create database tables on activation.
-		DB::maybe_create_tables();
+		\OneAccess\Plugin_Configs\DB::maybe_create_tables();
 	}
 );
 
@@ -96,10 +117,10 @@ register_deactivation_hook(
 	ONEACCESS_PLUGIN_LOADER_PLUGIN_BASENAME,
 	function (): void {
 
-		if ( ! class_exists( User_Roles::class ) ) {
+		if ( ! class_exists( '\OneAccess\User_Roles' ) ) {
 			return;
 		}
 
-		User_Roles::remove_roles_and_change_user_roles();
+		\OneAccess\User_Roles::remove_roles_and_change_user_roles();
 	}
 );

@@ -7,7 +7,8 @@
 			"inc/"
 		],
 		"files": [
-			"inc/helpers/custom-functions.php"
+			"inc/helpers/custom-functions.php",
+			"vendor/woocommerce/action-scheduler/action-scheduler.php"
 		]
 	},
 	"authors": [

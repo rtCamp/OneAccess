@@ -9,9 +9,6 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
 
 if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 
@@ -19,6 +16,22 @@ if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 	 * Function to deactivate the plugin and clean up options.
 	 */
 	function oneaccess_plugin_sync_deactivate(): void {
+
+		// list of actions to be cleared on uninstall.
+		$actions_to_clear = array(
+			'oneaccess_governing_site_configured',
+			'oneaccess_add_deduplicated_users',
+		);
+
+		// Clear scheduled actions.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			foreach ( $actions_to_clear as $action ) {
+				// check if action is scheduled then clear it.
+				if ( as_next_scheduled_action( $action ) ) {
+					as_unschedule_all_actions( $action );
+				}
+			}
+		}
 
 		$options_to_delete = array(
 			'oneaccess_child_site_api_key',
@@ -45,7 +58,7 @@ if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 		global $wpdb;
 		foreach ( $tables_to_drop as $table ) {
 			$full_table_name = $wpdb->prefix . $table;
-			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange -- this is to drop table on uninstall
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
 		}
 	}
 }

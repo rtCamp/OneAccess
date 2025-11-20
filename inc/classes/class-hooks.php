@@ -149,11 +149,6 @@ class Hooks {
 	 * @return string
 	 */
 	public function add_body_class_for_missing_sites( $classes ): string {
-		$current_screen = Utils::get_current_screen();
-
-		if ( ! $current_screen ) {
-			return $classes;
-		}
 
 		// get oneaccess_shared_sites option.
 		$shared_sites = get_option( Constants::ONEACCESS_SHARED_SITES, array() );
