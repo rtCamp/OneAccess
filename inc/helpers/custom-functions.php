@@ -5,11 +5,6 @@
  * @package oneaccess
  */
 
-// if accessed directly, exit.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Utils;
 
