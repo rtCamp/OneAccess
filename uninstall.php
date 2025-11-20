@@ -58,7 +58,7 @@ if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 		global $wpdb;
 		foreach ( $tables_to_drop as $table ) {
 			$full_table_name = $wpdb->prefix . $table;
-			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %s', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
 		}
 	}
 }

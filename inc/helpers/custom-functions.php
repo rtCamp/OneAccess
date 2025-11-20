@@ -103,7 +103,7 @@ function oneaccess_brand_site_to_governing_site_request_permission_check(): bool
 		$token = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_ONEACCESS_TOKEN'] ) );
 
 		// check if governing site is set and matches with request origin.
-		$request_origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? untrailingslashit( sanitize_url( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) ) : '';
+		$request_origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? untrailingslashit( esc_url_raw( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.WP.DeprecatedFunctions.sanitize_urlFound -- safe to use.
 		$user_agent     = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : ''; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___SERVER__HTTP_USER_AGENT__ -- this is to know requesting user domain for request which are generated from server.
 
 		// get connected sites.
