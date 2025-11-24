@@ -8,6 +8,7 @@
 namespace OneAccess;
 
 use OneAccess\Plugin_Configs\Constants;
+use OneAccess\Plugin_Configs\DB;
 use OneAccess\Traits\Singleton;
 
 /**
@@ -143,12 +144,9 @@ class Assets {
 				'js/user-profile.js',
 			);
 
-			$current_user_profile_request = Utils::get_users_profile_request_data();
-			$current_user                 = isset( $_GET['user_id'] ) ? filter_input( INPUT_GET, 'user_id', FILTER_SANITIZE_NUMBER_INT ) : get_current_user_id(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this is to know on which user profile page we are.      
-			if ( ! is_array( $current_user_profile_request ) ) {
-				$current_user_profile_request = array();
-			}
-			$current_user_request = isset( $current_user_profile_request[ $current_user ] ) ? $current_user_profile_request[ $current_user ] : array();
+			$current_user                  = isset( $_GET['user_id'] ) ? filter_input( INPUT_GET, 'user_id', FILTER_SANITIZE_NUMBER_INT ) : get_current_user_id(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this is to know on which user profile page we are.      
+			$get_user_profile_request_data = DB::get_latest_profile_request_by_user_id( $current_user );
+			$current_user_request          = is_array( $get_user_profile_request_data ) && ! empty( $get_user_profile_request_data ) ? $get_user_profile_request_data : null;
 
 			wp_localize_script(
 				'oneaccess-user-profile-script',

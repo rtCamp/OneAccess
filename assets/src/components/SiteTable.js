@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useState } from '@wordpress/element';
 import { Button, Card, CardHeader, CardBody, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
@@ -35,7 +38,7 @@ const SiteTable = ( { sites, onEdit, onDelete, setFormData, setShowModal } ) => 
 				</Button>
 			</CardHeader>
 			<CardBody>
-				<table className="wp-list-table widefat fixed striped">
+				<table className="wp-list-table widefat fixed striped " style={ { marginTop: '16px' } }>
 					<thead>
 						<tr>
 							<th>{ __( 'Site Name', 'oneaccess' ) }</th>

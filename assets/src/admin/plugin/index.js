@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Card, CardHeader, CardBody, Notice, Button, SelectControl } from '@wordpress/components';
@@ -19,6 +22,8 @@ const SiteTypeSelector = ( { value, setSiteType } ) => (
 			{ label: __( 'Brand Site', 'oneaccess' ), value: 'brand-site' },
 			{ label: __( 'Governing Site', 'oneaccess' ), value: 'governing-site' },
 		] }
+		__next40pxDefaultSize
+		__nextHasNoMarginBottom
 	/>
 );
 

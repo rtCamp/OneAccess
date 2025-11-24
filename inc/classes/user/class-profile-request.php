@@ -8,6 +8,7 @@
 namespace OneAccess\User;
 
 use OneAccess\Plugin_Configs\Constants;
+use OneAccess\Plugin_Configs\DB;
 use OneAccess\Traits\Singleton;
 use OneAccess\Utils;
 
@@ -58,12 +59,12 @@ class Profile_Request {
 		$processed[ $user_id ] = true;
 
 		// get profile request data.
-		$profile_request_data = Utils::get_users_profile_request_data();
+		$profile_request_data = DB::get_pending_profile_request_by_user_id( $user_id );
 		if ( ! is_array( $profile_request_data ) ) {
 			$profile_request_data = array();
 		}
 
-		$request_exists = isset( $profile_request_data[ $user_id ] ) && 'pending' === $profile_request_data[ $user_id ]['status'];
+		$request_exists = is_array( $profile_request_data ) && ! empty( $profile_request_data );
 
 		if ( $request_exists ) {
 			return;
@@ -102,7 +103,7 @@ class Profile_Request {
 				}
 				if ( $post_user_data !== $user_meta_data ) {
 					$updated_metadata[ $field ] = array(
-						'old' => self::sanitize_user_fields( $field, $user_meta[ $field ][0] ) ?? '',
+						'old' => self::sanitize_user_fields( $field, isset( $user_meta[ $field ] ) ? $user_meta[ $field ][0] : '' ) ?? '',
 						'new' => self::sanitize_user_fields( $field, $post_data[ $field ] ) ?? '',
 					);
 					$post_data[ $field ]        = $user_meta[ $field ][0] ?? '';
@@ -166,8 +167,7 @@ class Profile_Request {
 			'requested_at' => current_time( 'mysql' ),
 		);
 
-		// update profile request data.
-		update_option( Constants::ONEACCESS_PROFILE_UPDATE_REQUESTS, $profile_request_data, false );
+		DB::add_profile_request( $user_id, $profile_request_data[ $user_id ], 'pending' );
 	}
 
 	/**

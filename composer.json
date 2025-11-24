@@ -7,7 +7,8 @@
 			"inc/"
 		],
 		"files": [
-			"inc/helpers/custom-functions.php"
+			"inc/helpers/custom-functions.php",
+			"vendor/woocommerce/action-scheduler/action-scheduler.php"
 		]
 	},
 	"authors": [
@@ -28,9 +29,17 @@
 		"wp-phpunit/wp-phpunit": "^6.2",
 		"yoast/phpunit-polyfills": "^1.0"
 	},
+	"require": {
+		"woocommerce/action-scheduler":"3.9.3"
+	},
 	"config": {
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
+	},
+	"scripts": {
+		"format": "phpcbf --standard=phpcs.xml.dist --report-summary --report-source",
+		"lint": "phpcs --standard=phpcs.xml.dist",
+		"pot": "wp i18n make-pot . languages/oneaccess.pot --exclude=node_modules,vendor,tests --ignore-domain=default"
 	}
 }

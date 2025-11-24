@@ -8,8 +8,9 @@
 namespace OneAccess\REST;
 
 use OneAccess\Plugin_Configs\Constants;
+use OneAccess\Plugin_Configs\DB;
 use OneAccess\Traits\Singleton;
-use OneAccess\Utils;
+use WP_REST_Request;
 use WP_REST_Server;
 
 /**
@@ -57,7 +58,7 @@ class Users {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_user' ),
-					'permission_callback' => 'oneaccess_validate_api_key',
+					'permission_callback' => '\oneaccess_validate_api_key',
 					'args'                => array(
 						'username'  => array(
 							'required'    => true,
@@ -90,7 +91,39 @@ class Users {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_users' ),
-					'permission_callback' => 'oneaccess_validate_api_key',
+					'permission_callback' => array( Basic_Options::class, 'check_user_permissions' ),
+					'args'                => array(
+						'paged'        => array(
+							'required'          => false,
+							'type'              => 'integer',
+							'default'           => 1,
+							'sanitize_callback' => 'absint',
+						),
+						'per_page'     => array(
+							'required'          => false,
+							'type'              => 'integer',
+							'default'           => 20,
+							'sanitize_callback' => 'absint',
+						),
+						'search_query' => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'role'         => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'site'         => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
 				),
 			)
 		);
@@ -169,7 +202,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'update_user' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'email'    => array(
 						'required'          => true,
@@ -238,12 +271,12 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'approve_profile' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
-					'user_login' => array(
+					'user_id' => array(
 						'required'    => true,
 						'type'        => 'string',
-						'description' => __( 'The email of the user whose profile request is being approved.', 'oneaccess' ),
+						'description' => __( 'The user id of the user whose profile request is being approved.', 'oneaccess' ),
 					),
 				),
 			)
@@ -258,7 +291,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'reject_profile' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'user_email'        => array(
 						'required'    => true,
@@ -312,7 +345,7 @@ class Users {
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'delete_user' ),
-				'permission_callback' => 'oneaccess_validate_api_key',
+				'permission_callback' => '\oneaccess_validate_api_key',
 				'args'                => array(
 					'email'    => array(
 						'required'          => true,
@@ -363,13 +396,6 @@ class Users {
 				),
 				404
 			);
-		}
-
-		// cleanup profile request data.
-		$profile_requests_data = Utils::get_users_profile_request_data();
-		if ( isset( $profile_requests_data[ $user->ID ] ) ) {
-			unset( $profile_requests_data[ $user->ID ] );
-			update_option( Constants::ONEACCESS_PROFILE_UPDATE_REQUESTS, $profile_requests_data, false );
 		}
 
 		// if function wp_delete_user is not available then include user.php file.
@@ -423,9 +449,20 @@ class Users {
 
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$error_log            = array();
+		$user_delete_results  = array();
 
 		foreach ( $sites as $site ) {
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site['site_url'] ) || in_array( $site['site_url'], $processed_sites, true ) ) {
+				if ( ! empty( $site['site_url'] ) ) {
+					$processed_sites[] = $site['site_url'];
+				}
+				continue;
+			}
+
 			$request_url = $site['site_url'] . '/wp-json/' . self::NAMESPACE . '/delete-user';
 			$api_key     = $oneaccess_sites_info[ $site['site_url'] ]['apiKey'] ?? '';
 			$response    = wp_safe_remote_request(
@@ -482,34 +519,8 @@ class Users {
 				'message' => $response_body['message'] ?? __( 'User deleted successfully.', 'oneaccess' ),
 			);
 
-			// get oneaccess_new_users option.
-			$oneaccess_new_users = get_option( Constants::ONEACCESS_NEW_USERS, array() );
-
-			$updated_new_users = array();
-			foreach ( $oneaccess_new_users as $key => $user ) {
-				if ( $user['username'] === $username || $user['email'] === $email ) {
-					$site_info = $user['sites'] ?? array();
-					// Remove the site from user's sites array.
-					$site_info = array_filter(
-						$site_info,
-						function ( $s ) use ( $site ) {
-							return $s['site_url'] !== $site['site_url'];
-						}
-					);
-
-					// if sites array is empty then skip adding this user to updated array.
-					if ( empty( $site_info ) ) {
-						continue;
-					}
-
-					$user['sites'] = array_values( $site_info );
-
-				}
-				$updated_new_users[] = $user;
-			}
-
-			// Update oneaccess_new_users option.
-			update_option( Constants::ONEACCESS_NEW_USERS, $updated_new_users, false );
+			// delete from deduplicated users table.
+			$user_delete_results[] = DB::delete_user_from_deduplicated_users( $email, $site['site_url'] );
 		}
 
 		return new \WP_REST_Response(
@@ -517,11 +528,12 @@ class Users {
 				'success' => count( $error_log ) === 0,
 				'message' => __( 'User deleted from sites successfully.', 'oneaccess' ),
 				'data'    => array(
-					'email'         => $email,
-					'username'      => $username,
-					'sites'         => $sites,
-					'response_data' => $response_data,
-					'error_log'     => $error_log,
+					'email'               => $email,
+					'username'            => $username,
+					'sites'               => $sites,
+					'response_data'       => $response_data,
+					'error_log'           => $error_log,
+					'user_delete_results' => $user_delete_results,
 				),
 			),
 			200
@@ -538,6 +550,7 @@ class Users {
 	public function reject_profile( \WP_REST_Request $request ): \WP_REST_Response {
 		$user_email        = sanitize_email( $request->get_param( 'user_email' ) );
 		$rejection_comment = sanitize_text_field( $request->get_param( 'rejection_comment' ) );
+		$request_id        = absint( $request->get_param( 'request_id' ) );
 
 		if ( empty( $user_email ) || empty( $rejection_comment ) ) {
 			return new \WP_REST_Response(
@@ -562,9 +575,9 @@ class Users {
 		}
 
 		// get user profile request data.
-		$profile_requests_data = Utils::get_users_profile_request_data();
+		$profile_requests_data = DB::get_profile_request_by_id( $request_id );
 
-		if ( ! isset( $profile_requests_data[ $user->ID ] ) || 'pending' !== $profile_requests_data[ $user->ID ]['status'] ) {
+		if ( ! $profile_requests_data || 'pending' !== $profile_requests_data['status'] ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
@@ -574,13 +587,8 @@ class Users {
 			);
 		}
 
-		// Update the profile request status to rejected.
-		$profile_requests_data[ $user->ID ]['status'] = 'rejected';
-
-		$profile_requests_data[ $user->ID ]['rejection_comment'] = $rejection_comment;
-
-		// update profile request data.
-		update_option( Constants::ONEACCESS_PROFILE_UPDATE_REQUESTS, $profile_requests_data, false );
+		// Update the profile request status to rejected with comment.
+		DB::reject_profile_request_by_id( $request_id, $rejection_comment );
 
 		return new \WP_REST_Response(
 			array(
@@ -598,37 +606,47 @@ class Users {
 	 * @return \WP_REST_Response
 	 */
 	public function approve_profile( \WP_REST_Request $request ): \WP_REST_Response {
-		$user_login = sanitize_text_field( $request->get_param( 'user_login' ) );
 
-		if ( empty( $user_login ) ) {
+		$user_id    = absint( $request->get_param( 'user_id' ) );
+		$user_email = sanitize_email( $request->get_param( 'user_email' ) );
+		$request_id = sanitize_text_field( $request->get_param( 'request_id' ) );
+
+		if ( empty( $user_id ) || empty( $request_id ) ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'User email is required.', 'oneaccess' ),
+					'message' => __( 'User ID and request ID are required.', 'oneaccess' ),
+					'data'    => array(
+						'user_id'    => $user_id,
+						'request_id' => $request_id,
+					),
 				),
 				400
 			);
 		}
 
 		// Get the user by user_login.
-		$user = get_user_by( 'login', $user_login );
+		$user = get_user_by( 'id', $user_id );
 		if ( ! $user ) {
-			return new \WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => __( 'User not found.', 'oneaccess' ),
-				),
-				404
-			);
+
+			$user = get_user_by( 'email', $user_email );
+
+			if ( ! $user ) {
+
+				return new \WP_REST_Response(
+					array(
+						'success' => false,
+						'message' => __( 'User not found.', 'oneaccess' ),
+					),
+					404
+				);
+			}
 		}
 
 		// get user profile request data.
-		$profile_requests_data = Utils::get_users_profile_request_data();
+		$profile_requests_data = DB::get_profile_request_by_id( $request_id );
 
-		$user_by_login = get_user_by( 'login', $user_login );
-		$user_id       = $user_by_login->ID ?? 0;
-
-		if ( ! isset( $profile_requests_data[ $user_id ] ) || 'pending' !== $profile_requests_data[ $user_id ]['status'] ) {
+		if ( ! $profile_requests_data || 'pending' !== $profile_requests_data['status'] ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
@@ -638,58 +656,55 @@ class Users {
 			);
 		}
 
-		// Update the user data with the requested changes.
-		$user_meta_to_update = $profile_requests_data[ $user_id ]['metadata'] ?? array();
-		foreach ( $user_meta_to_update as $meta_key => $meta_value ) {
-			if ( is_array( $meta_value ) && isset( $meta_value['new'] ) ) {
-				update_user_meta( $user_id, $meta_key, $meta_value['new'] );
+		// Update the profile request status to approved.
+		DB::approve_profile_request_by_id( $request_id );
+
+		// Update user meta with the new profile data.
+		if ( ! empty( $profile_requests_data['request_data'] ) ) {
+			$user_data = $profile_requests_data['request_data']['data'] ?? array();
+
+			foreach ( $user_data as $key => $value ) {
+
+				if ( 'email' === $key ) {
+					wp_update_user(
+						array(
+							'ID'         => $user->ID,
+							'user_email' => $value['new'],
+						)
+					);
+					continue;
+				} elseif ( 'username' === $key ) {
+					wp_update_user(
+						array(
+							'ID'            => $user->ID,
+							'user_nicename' => $value['new'],
+						)
+					);
+					continue;
+				} elseif ( 'url' === $key ) {
+					wp_update_user(
+						array(
+							'ID'       => $user->ID,
+							'user_url' => $value['new'],
+						)
+					);
+					continue;
+				}
+
+				wp_update_user(
+					array(
+						'ID' => $user->ID,
+						$key => $value['new'],
+					)
+				);
+			}
+
+			$user_metadata = $profile_requests_data['request_data']['metadata'] ?? array();
+
+			foreach ( $user_metadata as $meta_key => $meta_value ) {
+				update_user_meta( $user->ID, $meta_key, $meta_value['new'] );
 			}
 		}
-
-		// update email, display name, and URL if they are part of the request.
-		$user_info_to_update = array();
-
-		if ( isset( $profile_requests_data[ $user_id ]['data']['display_name']['new'] ) && ! empty( $profile_requests_data[ $user_id ]['data']['display_name']['new'] ) ) {
-			$user_info_to_update['display_name'] = $profile_requests_data[ $user_id ]['data']['display_name']['new'];
-		} else {
-			$user_info_to_update['display_name'] = get_userdata( $user_id )->display_name;
-		}
-
-		if ( isset( $profile_requests_data[ $user_id ]['data']['email']['new'] ) && ! empty( $profile_requests_data[ $user_id ]['data']['email']['new'] ) ) {
-			$user_info_to_update['user_email'] = $profile_requests_data[ $user_id ]['data']['email']['new'];
-		} else {
-			$user_info_to_update['user_email'] = get_userdata( $user_id )->user_email;
-		}
-
-		if ( isset( $profile_requests_data[ $user_id ]['data']['url']['new'] ) && ! empty( $profile_requests_data[ $user_id ]['data']['url']['new'] ) ) {
-			$user_info_to_update['user_url'] = $profile_requests_data[ $user_id ]['data']['url']['new'];
-		} else {
-			$user_info_to_update['user_url'] = get_userdata( $user_id )->user_url;
-		}
-
-		if ( isset( $profile_requests_data[ $user_id ]['data']['username']['new'] ) && ! empty( $profile_requests_data[ $user_id ]['data']['username']['new'] ) ) {
-			$user_info_to_update['user_nicename'] = $profile_requests_data[ $user_id ]['data']['username']['new'];
-		} else {
-			$user_info_to_update['user_nicename'] = get_userdata( $user_id )->user_nicename;
-		}
-
-		wp_update_user(
-			array(
-				'ID'           => $user_id,
-				'display_name' => $user_info_to_update['display_name'],
-				'user_email'   => $user_info_to_update['user_email'],
-				'user_url'     => $user_info_to_update['user_url'],
-			)
-		);
-
-		// Update the profile request status to approved.
-		$profile_requests_data[ $user_id ]['status'] = 'approved';
-
-		// remove the user from pending requests.
-		unset( $profile_requests_data[ $user_id ] );
-
-		// update profile request data.
-		update_option( Constants::ONEACCESS_PROFILE_UPDATE_REQUESTS, $profile_requests_data, false );
 
 		return new \WP_REST_Response(
 			array(
@@ -736,6 +751,7 @@ class Users {
 
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$error_log            = array();
 
 		foreach ( $sites as $site_url ) {
@@ -748,6 +764,14 @@ class Users {
 						esc_html( $site_url['siteUrl'] ?? '' )
 					),
 				);
+				continue;
+			}
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url['siteUrl'] ) || in_array( $site_url['siteUrl'], $processed_sites, true ) ) {
+				if ( ! empty( $site_url['siteUrl'] ) ) {
+					$processed_sites[] = $site_url['siteUrl'];
+				}
 				continue;
 			}
 
@@ -790,7 +814,7 @@ class Users {
 				$error_log[] = array(
 					'site_name' => $site_url['siteUrl'] ?? '',
 					'message'   => sprintf(
-						/* translators: %s is the site URL */
+							/* translators: %s is the site URL */
 						__( 'Failed to add user to site %s.', 'oneaccess' ),
 						esc_html( $site_url['siteUrl'] ?? '' )
 					),
@@ -814,20 +838,28 @@ class Users {
 				'message' => __( 'User added successfully.', 'oneaccess' ),
 			);
 
-			// Update the user in options.
-			$existing_users = get_option( Constants::ONEACCESS_NEW_USERS, array() );
-			foreach ( $existing_users as $key => $user ) {
-				if ( $user['username'] === $username || $user['email'] === $email ) {
-					// Update the sites for the existing user.
-					$existing_users[ $key ]['sites'][] = array(
-						'site_url'  => $site_url['siteUrl'],
-						'role'      => $user_role,
-						'site_name' => $oneaccess_sites_info[ $site_url['siteUrl'] ]['siteName'] ?? '',
-					);
-					break;
-				}
-			}
-			update_option( Constants::ONEACCESS_NEW_USERS, $existing_users, false );
+			$first_name = '';
+			$last_name  = '';
+
+			// split full name into first and last name.
+			$name_parts = explode( ' ', $full_name );
+
+			$first_name = $name_parts[0] ?? '';
+			$last_name  = isset( $name_parts[1] ) ? implode( ' ', array_slice( $name_parts, 1 ) ) : '';
+
+			$user_id   = isset( $response_body['data']['user_id'] ) ? absint( $response_body['data']['user_id'] ) : 0;
+			$user_role = isset( $response_body['data']['role'] ) ? sanitize_text_field( $response_body['data']['role'] ) : 'subscriber';
+
+			// add user to deduplicated users table.
+			DB::add_user_to_deduplicated_users(
+				$email,
+				$first_name,
+				$last_name,
+				$site_url['siteName'] ?? '',
+				$site_url['siteUrl'] ?? '',
+				$user_id,
+				array( $user_role ),
+			);
 
 		}
 
@@ -928,12 +960,22 @@ class Users {
 
 		$response_data        = array();
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$error_log            = array();
+		$db_results           = array();
 
 		foreach ( $roles as $key => $value ) {
 			$site_url = $oneaccess_sites_info[ $key ]['siteUrl'] ?? '';
 			$api_key  = $oneaccess_sites_info[ $key ]['apiKey'] ?? '';
 			$new_role = $value;
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
+				if ( ! empty( $site_url ) ) {
+					$processed_sites[] = $site_url;
+				}
+				continue;
+			}
 
 			$request_url = $site_url . '/wp-json/' . self::NAMESPACE . '/update-user';
 
@@ -994,22 +1036,8 @@ class Users {
 				'message' => __( 'User role updated successfully.', 'oneaccess' ),
 			);
 
-			// update the user role into options.
-			$existing_users = get_option( Constants::ONEACCESS_NEW_USERS, array() );
-
-			foreach ( $existing_users as $user_key => $user ) {
-				if ( $user['username'] === $username || $user['email'] === $email ) {
-					$sites = $user['sites'] ?? array();
-					foreach ( $sites as $site_key => $site ) {
-						if ( $site['site_url'] === $site_url ) {
-							// Update the original array using references.
-							$existing_users[ $user_key ]['sites'][ $site_key ]['role'] = $new_role;
-						}
-					}
-				}
-			}
-
-			update_option( Constants::ONEACCESS_NEW_USERS, $existing_users, false );
+			// update role in deduplicated users table.
+			$db_results[] = DB::update_user_role_in_deduplicated_users( $email, $new_role, $site_url );
 
 		}
 
@@ -1023,6 +1051,7 @@ class Users {
 					'roles'         => $roles,
 					'response_data' => $response_data,
 					'error_log'     => $error_log,
+					'db_results'    => $db_results,
 				),
 			),
 			200
@@ -1133,35 +1162,156 @@ class Users {
 	/**
 	 * Get users.
 	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 *
 	 * @return \WP_REST_Response
 	 */
-	public function get_users(): \WP_REST_Response {
-		$users = get_option( Constants::ONEACCESS_NEW_USERS, array() );
+	public function get_users( WP_REST_Request $request ): \WP_REST_Response {
 
-		// get all shared sites.
-		$all_sites = $GLOBALS['oneaccess_sites'] ?? array();
+		global $wpdb;
 
-		// filter out users which are added to sites but that site is no longer in shared sites.
-		$filtered_users = array();
+		$paged        = intval( $request->get_param( 'paged' ) ) ?? 1;
+		$per_page     = intval( $request->get_param( 'per_page' ) ) ?? 20;
+		$search_query = sanitize_text_field( $request->get_param( 'search_query' ) ) ?? '';
+		$role         = sanitize_text_field( $request->get_param( 'role' ) ) ?? '';
+		$site         = sanitize_text_field( $request->get_param( 'site' ) ) ?? '';
+
+		// Calculate offset.
+		$offset = ( $paged - 1 ) * $per_page;
+
+		// Table name.
+		$table_name = $wpdb->prefix . Constants::ONEACCESS_DEDUPLICATED_USERS_TABLE;
+
+		// Build WHERE conditions.
+		$where_conditions = array();
+		$prepare_values   = array();
+
+		// Search query - search in email, first_name, last_name.
+		if ( ! empty( $search_query ) ) {
+			$where_conditions[] = '(email LIKE %s OR first_name LIKE %s OR last_name LIKE %s OR CONCAT(first_name, " ", last_name) LIKE %s)';
+			$search_like        = '%' . $wpdb->esc_like( $search_query ) . '%';
+			$prepare_values[]   = $search_like;
+			$prepare_values[]   = $search_like;
+			$prepare_values[]   = $search_like;
+			$prepare_values[]   = $search_like;
+		}
+
+		// Role filter - search within sites_info.
+		if ( ! empty( $role ) ) {
+			$where_conditions[] = "JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].roles[*]') IS NOT NULL";
+			$prepare_values[]   = $role;
+		}
+
+		// Site filter - search by site_url or site_name in sites_info.
+		if ( ! empty( $site ) ) {
+			$where_conditions[] = "(JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].site_url') IS NOT NULL OR JSON_SEARCH(sites_info, 'one', %s, NULL, '$[*].site_name') IS NOT NULL)";
+			$site_like          = '%' . $wpdb->esc_like( $site ) . '%';
+			$prepare_values[]   = $site_like;
+			$prepare_values[]   = $site_like;
+		}
+
+		// Combine WHERE conditions.
+		$where_clause = '';
+		if ( ! empty( $where_conditions ) ) {
+			$where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
+		}
+
+		// Build count query.
+		$count_query = "SELECT COUNT(*) FROM $table_name $where_clause";
+
+		// Prepare count query if there are values.
+		if ( ! empty( $prepare_values ) ) {
+			$count_query = $wpdb->prepare( $count_query, $prepare_values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared here.
+		}
+
+		$total_users = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- query is prepared above.
+
+		// Build main query.
+		$query = "SELECT * FROM $table_name $where_clause ORDER BY created_at DESC LIMIT %d OFFSET %d";
+
+		// Add pagination values to prepare.
+		$prepare_values[] = $per_page;
+		$prepare_values[] = $offset;
+
+		// Prepare and execute query.
+		$prepared_query = $wpdb->prepare( $query, $prepare_values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query is prepared here.
+		$users          = $wpdb->get_results( $prepared_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- query is prepared above.
+
+		// Process users data - decode sites_info.
+		$processed_users = array();
 		foreach ( $users as $user ) {
-			$sites = $user['sites'] ?? array();
-			$sites = array_filter(
-				$sites,
-				function ( $site ) use ( $all_sites ): bool {
-					return isset( $all_sites[ $site['site_url'] ] );
-				}
+			$user_data = array(
+				'id'         => $user->id,
+				'email'      => $user->email,
+				'first_name' => $user->first_name,
+				'last_name'  => $user->last_name,
+				'sites_info' => json_decode( $user->sites_info, true ),
+				'created_at' => $user->created_at,
+				'updated_at' => $user->updated_at,
 			);
-			if ( ! empty( $sites ) ) {
-				$user['sites']    = array_values( $sites );
-				$filtered_users[] = $user;
+
+			/**
+			 * Filter by role within sites_info.
+			 */
+			if ( ! empty( $role ) ) {
+				$has_role = false;
+				foreach ( $user_data['sites_info'] as $site_info ) {
+					if ( isset( $site_info['roles'] ) && in_array( $role, $site_info['roles'], true ) ) {
+						$has_role = true;
+						break;
+					}
+				}
+				if ( ! $has_role ) {
+					continue;
+				}
+			}
+
+			$processed_users[] = $user_data;
+		}
+
+		// get global oneaccess_sites variable.
+		$oneaccess_sites = $GLOBALS['oneaccess_sites'] ?? array();
+
+		// Update processed users site names from oneaccess_sites.
+		foreach ( $processed_users as $key => $user ) {
+			// Loop through sites in reverse to safely unset.
+			$site_keys = array_keys( $user['sites_info'] );
+
+			foreach ( array_reverse( $site_keys ) as $site_key ) {
+				$site_info = $user['sites_info'][ $site_key ];
+				foreach ( $oneaccess_sites as $site ) {
+					if ( trailingslashit( $site_info['site_url'] ) === trailingslashit( $site['siteUrl'] ) ) {
+						$processed_users[ $key ]['sites_info'][ $site_key ]['site_name'] = $site['siteName'];
+						break; // Found match, no need to continue.
+					}
+				}
 			}
 		}
 
+		// Re-index the processed_users array.
+		$processed_users = array_values( $processed_users );
+
+		// Calculate total pages.
+		$total_pages = ceil( $total_users / $per_page );
+
 		return new \WP_REST_Response(
 			array(
-				'success' => true,
-				'users'   => $filtered_users,
-				'count'   => count( $filtered_users ),
+				'success'    => true,
+				'users'      => $processed_users,
+				'pagination' => array(
+					'total_users'  => $total_users,
+					'total_pages'  => $total_pages,
+					'current_page' => $paged,
+					'per_page'     => $per_page,
+					'has_more'     => $paged < $total_pages,
+				),
+				'filters'    => array(
+					'search_query' => $search_query,
+					'role'         => $role,
+					'site'         => $site,
+					'paged'        => $paged,
+					'per_page'     => $per_page,
+				),
 			),
 			200
 		);
@@ -1173,6 +1323,7 @@ class Users {
 	 * @return \WP_REST_Response
 	 */
 	public function generate_strong_password(): \WP_REST_Response {
+
 		$password = wp_generate_password( 32, true, true );
 
 		// at random position add 0-9 any digit to make sure password always contains a digit.
@@ -1195,8 +1346,10 @@ class Users {
 	 * @return \WP_REST_Response
 	 */
 	public function create_users_for_sites( \WP_REST_Request $request ): \WP_REST_Response {
+
 		$userdata = $request->get_param( 'userdata' );
 		$sites    = $request->get_param( 'sites' );
+
 		if ( empty( $userdata ) || empty( $sites ) ) {
 			return new \WP_REST_Response(
 				array(
@@ -1268,10 +1421,21 @@ class Users {
 		}
 
 		$oneaccess_sites_info = $GLOBALS['oneaccess_sites'] ?? array();
+		$processed_sites      = array();
 		$response_data        = array();
 		$error_log            = array();
+
 		foreach ( $sites as $site ) {
-			$site_url  = $site['siteUrl'] ?? '';
+			$site_url = $site['siteUrl'] ?? '';
+
+			// Skip duplicate or invalid sites.
+			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
+				if ( ! empty( $site_url ) ) {
+					$processed_sites[] = $site_url;
+				}
+				continue;
+			}
+
 			$api_key   = $oneaccess_sites_info[ $site_url ]['apiKey'] ?? '';
 			$site_name = $oneaccess_sites_info[ $site_url ]['siteName'] ?? '';
 			if ( empty( $api_key ) ) {
@@ -1285,6 +1449,7 @@ class Users {
 				);
 				continue;
 			}
+
 			$request_url = $oneaccess_sites_info[ $site_url ]['siteUrl'] . '/wp-json/' . self::NAMESPACE . '/new-users';
 
 			$response = wp_safe_remote_post(
@@ -1337,80 +1502,6 @@ class Users {
 				'status'  => 'success',
 				'message' => __( 'User created successfully.', 'oneaccess' ),
 			);
-
-			// store the user data into options array.
-			$existing_users = get_option( Constants::ONEACCESS_NEW_USERS, array() );
-
-			// Check if user already exists based on username or email.
-			$user_exists = false;
-			$user_index  = -1;
-
-			foreach ( $existing_users as $index => $user ) {
-				if ( ( $userdata['username'] ?? '' ) === $user['username'] || ( $userdata['email'] ?? '' ) === $user['email'] ) {
-					$user_exists = true;
-					$user_index  = $index;
-					break;
-				}
-			}
-
-			if ( $user_exists ) {
-				// User exists, append site_url and role to their sites array.
-				if ( ! is_array( $existing_users[ $user_index ]['sites'] ) ) {
-					$existing_users[ $user_index ]['sites'] = (array) $existing_users[ $user_index ]['sites'];
-				}
-				// Check if site_url already exists to update role or add new site.
-				$site_exists = false;
-				foreach ( $existing_users[ $user_index ]['sites'] as &$site ) {
-					if ( $site['site_url'] === $site_url ) {
-						$site['role'] = $userdata['role'] ?? 'subscriber'; // Update role for existing site.
-						$site_exists  = true;
-						break;
-					}
-				}
-				if ( ! $site_exists ) {
-					// Add new site with role.
-					$existing_users[ $user_index ]['sites'][] = array(
-						'site_url'  => $site_url,
-						'role'      => $userdata['role'] ?? 'subscriber',
-						'site_name' => $site_name,
-					);
-				}
-			} else {
-				// User does not exist, add new user entry.
-				$existing_users[] = array(
-					'username'  => $userdata['username'] ?? '',
-					'email'     => $userdata['email'] ?? '',
-					'full_name' => $userdata['fullName'] ?? '',
-					'password'  => $userdata['password'] ?? '',
-					'sites'     => array(
-						array(
-							'site_url'  => $site_url,
-							'role'      => $userdata['role'] ?? 'subscriber',
-							'site_name' => $site_name,
-						),
-					),
-				);
-			}
-
-			// Update the option with the modified users array.
-			update_option( Constants::ONEACCESS_NEW_USERS, $existing_users, false );
-
-		}
-
-		$result = array();
-		foreach ( $response_data as $data ) {
-			$result[] = array(
-				'site'    => trim( $data['site'] ) ?? '',
-				'status'  => $data['status'] ?? 'success',
-				'message' => $data['message'] ?? __( 'User created successfully.', 'oneaccess' ),
-			);
-		}
-		foreach ( $error_log as $error ) {
-			$result[] = array(
-				'site'    => trim( $error['site_name'] ) ?? '',
-				'status'  => 'error' ?? '',
-				'message' => $error['message'] ?? __( 'Error occurred.', 'oneaccess' ),
-			);
 		}
 
 		return new \WP_REST_Response(
@@ -1420,7 +1511,6 @@ class Users {
 				'data'    => array(
 					'response_data' => $response_data,
 					'error_log'     => $error_log,
-					'results'       => $result,
 				),
 			),
 			200

@@ -1,8 +1,13 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Notice, Snackbar } from '@wordpress/components';
+
+/**
+ * Internal dependencies
+ */
 import SiteTable from '../../components/SiteTable';
 import SiteModal from '../../components/SiteModal';
 import SiteSettings from '../../components/SiteSettings';
@@ -208,5 +213,3 @@ if ( target ) {
 	const root = createRoot( target );
 	root.render( <OneAccessSettingsPage /> );
 }
-
-/* eslint-enable react-hooks/exhaustive-deps */

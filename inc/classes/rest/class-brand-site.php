@@ -9,7 +9,6 @@ namespace OneAccess\REST;
 
 use OneAccess\Plugin_Configs\Constants;
 use OneAccess\Traits\Singleton;
-use OneAccess\Utils;
 
 /**
  * Class Brand_Site
@@ -46,20 +45,6 @@ class Brand_Site {
 	 * Register REST API routes.
 	 */
 	public function register_routes(): void {
-		/**
-		 * Register a route to get users profile request data.
-		 */
-		register_rest_route(
-			self::NAMESPACE,
-			'/profile-requests',
-			array(
-				array(
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_profile_requests' ),
-					'permission_callback' => 'oneaccess_validate_api_key',
-				),
-			)
-		);
 
 		/**
 		 * Register a route to get user profile request data across all brand sites.
@@ -98,10 +83,10 @@ class Brand_Site {
 							'type'        => 'string',
 							'description' => __( 'The email of the user whose profile request is being approved.', 'oneaccess' ),
 						),
-						'user_login' => array(
-							'required'    => false,
+						'user_id'    => array(
+							'required'    => true,
 							'type'        => 'string',
-							'description' => __( 'The name of the user whose profile request is being approved.', 'oneaccess' ),
+							'description' => __( 'The ID of the user whose profile request is being approved.', 'oneaccess' ),
 						),
 					),
 				),
@@ -152,6 +137,7 @@ class Brand_Site {
 		$site_name         = sanitize_text_field( $request->get_param( 'site_name' ) );
 		$user_email        = sanitize_email( $request->get_param( 'user_email' ) );
 		$rejection_comment = sanitize_text_field( $request->get_param( 'rejection_comment' ) );
+		$request_id        = sanitize_text_field( $request->get_param( 'request_id' ) );
 
 		if ( empty( $site_name ) || empty( $user_email ) || empty( $rejection_comment ) ) {
 			return new \WP_REST_Response(
@@ -177,6 +163,7 @@ class Brand_Site {
 				'body'    => array(
 					'user_email'        => $user_email,
 					'rejection_comment' => $rejection_comment,
+					'request_id'        => $request_id,
 				),
 			)
 		);
@@ -213,8 +200,8 @@ class Brand_Site {
 	public function approve_profile_request( \WP_REST_Request $request ): \WP_REST_Response {
 		$site_name  = sanitize_text_field( $request->get_param( 'site_name' ) );
 		$user_email = sanitize_email( $request->get_param( 'user_email' ) );
-		$user_login = sanitize_text_field( $request->get_param( 'user_login' ) );
-		$user_data  = $request->get_param( 'data' );
+		$user_id    = absint( $request->get_param( 'user_id' ) );
+		$request_id = sanitize_text_field( $request->get_param( 'request_id' ) );
 
 		if ( empty( $site_name ) || empty( $user_email ) ) {
 			return new \WP_REST_Response(
@@ -238,7 +225,9 @@ class Brand_Site {
 					'X-OneAccess-Token' => $api_key,
 				),
 				'body'    => array(
-					'user_login' => $user_login,
+					'user_id'    => $user_id,
+					'user_email' => $user_email,
+					'request_id' => $request_id,
 				),
 			)
 		);
@@ -255,28 +244,9 @@ class Brand_Site {
 
 		return new \WP_REST_Response(
 			array(
-				'success'    => true,
-				'message'    => __( 'Profile request approved successfully.', 'oneaccess' ),
-				'user_data'  => $user_data,
-				'user_login' => $user_login,
-			),
-			200
-		);
-	}
-
-	/**
-	 * Get users profile request data.
-	 *
-	 * @return \WP_REST_Response
-	 */
-	public function get_profile_requests(): \WP_REST_Response {
-		// Get users profile request data.
-		$profile_requests_data = Utils::get_users_profile_request_data();
-
-		return new \WP_REST_Response(
-			array(
 				'success' => true,
-				'data'    => $profile_requests_data,
+				'message' => __( 'Profile request approved successfully.', 'oneaccess' ),
+				'user_id' => $user_id,
 			),
 			200
 		);

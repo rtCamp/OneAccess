@@ -9,30 +9,57 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
 
 if ( ! function_exists( 'oneaccess_plugin_sync_deactivate' ) ) {
 
 	/**
 	 * Function to deactivate the plugin and clean up options.
 	 */
-	function oneaccess_plugin_sync_deactivate() {
-		// Remove oneaccess_child_site_api_key option.
-		delete_option( 'oneaccess_child_site_api_key' );
-		// Remove the shared sites option.
-		delete_option( 'oneaccess_shared_sites' );
-		// Remove the site type option.
-		delete_option( 'oneaccess_site_type' );
-		// Remove oneaccess_profile_update_requests option.
-		delete_option( 'oneaccess_profile_update_requests' );
-		// Remove oneaccess_new_users option.
-		delete_option( 'oneaccess_new_users' );
+	function oneaccess_plugin_sync_deactivate(): void {
+
+		// list of actions to be cleared on uninstall.
+		$actions_to_clear = array(
+			'oneaccess_governing_site_configured',
+			'oneaccess_add_deduplicated_users',
+		);
+
+		// Clear scheduled actions.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			foreach ( $actions_to_clear as $action ) {
+				// check if action is scheduled then clear it.
+				if ( as_next_scheduled_action( $action ) ) {
+					as_unschedule_all_actions( $action );
+				}
+			}
+		}
+
+		$options_to_delete = array(
+			'oneaccess_child_site_api_key',
+			'oneaccess_shared_sites',
+			'oneaccess_site_type',
+			'oneaccess_profile_update_requests',
+			'oneaccess_new_users',
+			'oneaccess_governing_site_url',
+		);
+
+		foreach ( $options_to_delete as $option ) {
+			delete_option( $option );
+		}
+
 		// Remove oneaccess_site_type_transient transient.
 		delete_transient( 'oneaccess_site_type_transient' );
-		// Remove oneaccess_governing_site_url option.
-		delete_option( 'oneaccess_governing_site_url' );
+
+		// Drop custom tables created by the OneAccess.
+		$tables_to_drop = array(
+			'oneaccess_deduplicated_users',
+			'oneaccess_profile_requests',
+		);
+
+		global $wpdb;
+		foreach ( $tables_to_drop as $table ) {
+			$full_table_name = $wpdb->prefix . $table;
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %s', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
+		}
 	}
 }
 /**

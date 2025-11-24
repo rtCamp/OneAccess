@@ -43,20 +43,6 @@ class Constants {
 	public const ONEACCESS_SITE_TYPE = 'oneaccess_site_type';
 
 	/**
-	 * Profile update requests.
-	 *
-	 * @var string
-	 */
-	public const ONEACCESS_PROFILE_UPDATE_REQUESTS = 'oneaccess_profile_update_requests';
-
-	/**
-	 * New users.
-	 *
-	 * @var string
-	 */
-	public const ONEACCESS_NEW_USERS = 'oneaccess_new_users';
-
-	/**
 	 * Site type transient.
 	 *
 	 * @var string
@@ -76,6 +62,27 @@ class Constants {
 	 * @var string
 	 */
 	public const ONEACCESS_GOVERNING_SITE_URL = 'oneaccess_governing_site_url';
+
+	/**
+	 * De-duplicated users table.
+	 *
+	 * @var string
+	 */
+	public const ONEACCESS_DEDUPLICATED_USERS_TABLE = 'oneaccess_deduplicated_users';
+
+	/**
+	 * Profile requests table.
+	 *
+	 * @var string
+	 */
+	public const ONEACCESS_PROFILE_REQUESTS_TABLE = 'oneaccess_profile_requests';
+
+	/**
+	 * DB version.
+	 *
+	 * @var string
+	 */
+	public const ONEACCESS_DB_VERSION = 'oneaccess_db_version';
 
 	/**
 	 * Use Singleton trait.

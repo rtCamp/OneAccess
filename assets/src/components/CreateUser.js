@@ -1,4 +1,6 @@
-/* eslint-disable @wordpress/no-unsafe-wp-apis */
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import {
@@ -19,7 +21,11 @@ import {
 	SnackbarList,
 	Icon,
 } from '@wordpress/components';
-import { isValidEmail } from '../js/utils';
+
+/**
+ * Internal dependencies
+ */
+import { isValidEmail, checkPasswordStrength, strengthWidths, getStrengthColor } from '../js/utils';
 
 const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
@@ -42,28 +48,6 @@ const CreateUser = ( { availableSites } ) => {
 	const [ showPassword, setShowPassword ] = useState( false );
 	const [ passwordStrength, setPasswordStrength ] = useState( '' );
 	const [ userCreationNotices, setUserCreationNotices ] = useState( [] );
-
-	const checkPasswordStrength = ( password ) => {
-		let strength = 'weak';
-		if ( password.length >= 12 && /[A-Z]/.test( password ) && /[0-9]/.test( password ) && /[^A-Za-z0-9]/.test( password ) ) {
-			strength = 'strong';
-		} else if ( password.length >= 8 && /[A-Z]/.test( password ) && /[a-z]/.test( password ) && /[0-9]/.test( password ) ) {
-			strength = 'medium';
-		} else if ( password.length >= 8 ) {
-			strength = 'weak';
-		} else if ( password.length > 0 ) {
-			strength = 'very-weak';
-		}
-		return strength;
-	};
-
-	const strengthWidths = {
-		'very-weak': '25%',
-		weak: '50%',
-		medium: '75%',
-		strong: '100%',
-		default: '0%',
-	};
 
 	const fetchStrongPassword = useCallback( async () => {
 		setUserCreationNotices( [] );
@@ -161,7 +145,7 @@ const CreateUser = ( { availableSites } ) => {
 				return;
 			}
 
-			const results = data?.data?.results || [];
+			const results = data?.data?.response_data || [];
 			const newNotices = results.map( ( result ) => ( {
 				id: Math.random().toString(),
 				status: result.status === 'success' ? 'success' : 'error',
@@ -197,21 +181,6 @@ const CreateUser = ( { availableSites } ) => {
 		}
 	}, [ userFormData, selectedSites ] );
 
-	const getStrengthColor = () => {
-		switch ( passwordStrength ) {
-			case 'very-weak':
-				return '#dc3545';
-			case 'weak':
-				return '#ff6b6b';
-			case 'medium':
-				return '#ffc107';
-			case 'strong':
-				return '#28a745';
-			default:
-				return '#e1e5e9';
-		}
-	};
-
 	return (
 		<>
 			<Card>
@@ -228,111 +197,130 @@ const CreateUser = ( { availableSites } ) => {
 					</HStack>
 				</CardHeader>
 				<CardBody>
-					<Grid columns="2" gap="4">
-						<TextControl
-							label={ __( 'Username*', 'oneaccess' ) }
-							value={ userFormData.username }
-							onChange={ ( value ) => handleInputChange( 'username', value ) }
-							required
-							help={ __( 'Enter a unique username for the user account.', 'oneaccess' ) }
+					<form>
+						{ /* Hidden username field to prevent browser autofill */ }
+						<input
+							type="text"
+							name="username"
+							style={ { display: 'none' } }
+							autoComplete="username"
 						/>
-						<TextControl
-							label={ __( 'Full Name*', 'oneaccess' ) }
-							value={ userFormData.fullName }
-							onChange={ ( value ) => handleInputChange( 'fullName', value ) }
-							required
-							help={ __( 'Enter the user\'s display name.', 'oneaccess' ) }
-						/>
-						<TextControl
-							label={ __( 'Email Address*', 'oneaccess' ) }
-							type="email"
-							value={ userFormData.email }
-							onChange={ ( value ) => handleInputChange( 'email', value ) }
-							required
-							help={ __( 'A valid email address for account notifications.', 'oneaccess' ) }
-						/>
-						<SelectControl
-							label={ __( 'User Role*', 'oneaccess' ) }
-							value={ userFormData.role }
-							onChange={ ( value ) => handleInputChange( 'role', value ) }
-							options={ Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
-								value: role,
-								label,
-							} ) ) }
-							help={ __( 'Select the user role that determines their capabilities.', 'oneaccess' ) }
-						/>
-						<VStack spacing="2" style={ { gap: '0px' } }>
-							<HStack alignment="left" spacing="2" style={ { alignItems: 'flex-start' } }>
-								<TextControl
-									label={ __( 'Password*', 'oneaccess' ) }
-									type={ showPassword ? 'text' : 'password' }
-									value={ userFormData.password }
-									onChange={ ( value ) => handleInputChange( 'password', value ) }
-									required
-									help={ __( 'Password must be at least 8 characters long. Use a mix of letters (upper & lower case), numbers, and special characters for better security.', 'oneaccess' ) }
-									style={ { flex: 1 } }
-								/>
-								<Button
-									onClick={ () => setShowPassword( ! showPassword ) }
-									aria-label={ showPassword ? __( 'Hide password', 'oneaccess' ) : __( 'Show password', 'oneaccess' ) }
-									style={ {
-										marginTop: '1.5rem',
-										height: '2rem',
-										minWidth: 'auto',
-									} }
-									variant="secondary"
-								>
-									<Icon
-										icon={ showPassword ? 'hidden' : 'visibility' }
-										size={ 20 }
+						<Grid columns="2" gap="4">
+							<TextControl
+								label={ __( 'Username*', 'oneaccess' ) }
+								value={ userFormData.username }
+								onChange={ ( value ) => handleInputChange( 'username', value ) }
+								required
+								help={ __( 'Enter a unique username for the user account.', 'oneaccess' ) }
+								__next40pxDefaultSize
+								__nextHasNoMarginBottom
+							/>
+							<TextControl
+								label={ __( 'Full Name*', 'oneaccess' ) }
+								value={ userFormData.fullName }
+								onChange={ ( value ) => handleInputChange( 'fullName', value ) }
+								required
+								help={ __( 'Enter the user\'s display name.', 'oneaccess' ) }
+								__next40pxDefaultSize
+								__nextHasNoMarginBottom
+							/>
+							<TextControl
+								label={ __( 'Email Address*', 'oneaccess' ) }
+								type="email"
+								value={ userFormData.email }
+								onChange={ ( value ) => handleInputChange( 'email', value ) }
+								required
+								help={ __( 'A valid email address for account notifications.', 'oneaccess' ) }
+								__next40pxDefaultSize
+								__nextHasNoMarginBottom
+							/>
+							<SelectControl
+								label={ __( 'User Role*', 'oneaccess' ) }
+								value={ userFormData.role }
+								onChange={ ( value ) => handleInputChange( 'role', value ) }
+								options={ Object.entries( AVAILABLE_ROLES )?.map( ( [ role, label ] ) => ( {
+									value: role,
+									label,
+								} ) ) }
+								help={ __( 'Select the user role that determines their capabilities.', 'oneaccess' ) }
+								__next40pxDefaultSize
+								__nextHasNoMarginBottom
+							/>
+							<VStack spacing="2" style={ { gap: '0px' } }>
+								<HStack alignment="left" spacing="2" style={ { alignItems: 'flex-start' } }>
+									<TextControl
+										label={ __( 'Password*', 'oneaccess' ) }
+										type={ showPassword ? 'text' : 'password' }
+										value={ userFormData.password }
+										onChange={ ( value ) => handleInputChange( 'password', value ) }
+										required
+										help={ __( 'Password must be at least 8 characters long. Use a mix of letters (upper & lower case), numbers, and special characters for better security.', 'oneaccess' ) }
+										style={ { flex: 1 } }
+										__next40pxDefaultSize
+										__nextHasNoMarginBottom
 									/>
-								</Button>
-							</HStack>
-							{ userFormData.password && (
-								<div style={ { marginBottom: '12px' } }>
-									<div style={ { fontSize: '12px', color: '#6c757d' } }>
-										{ __( 'Password Strength:', 'oneaccess' ) }{ ' ' }
-										<span style={ { color: getStrengthColor(), fontWeight: '500' } }>
-											{ passwordStrength
-												? passwordStrength.replace( '-', ' ' ).toUpperCase()
-												: '' }
-										</span>
-									</div>
-									<div
+									<Button
+										onClick={ () => setShowPassword( ! showPassword ) }
+										aria-label={ showPassword ? __( 'Hide password', 'oneaccess' ) : __( 'Show password', 'oneaccess' ) }
 										style={ {
-											height: '4px',
-											width: '100%',
-											backgroundColor: '#e1e5e9',
-											borderRadius: '2px',
-											overflow: 'hidden',
+											marginTop: '1.5rem',
+											height: '2.5rem',
+											minWidth: 'auto',
 										} }
+										variant="secondary"
 									>
+										<Icon
+											icon={ showPassword ? 'visibility' : 'hidden' }
+											size={ 20 }
+										/>
+									</Button>
+								</HStack>
+								{ userFormData.password && (
+									<div style={ { marginBottom: '12px' } }>
+										<div style={ { fontSize: '12px', color: '#6c757d' } }>
+											{ __( 'Password Strength:', 'oneaccess' ) }{ ' ' }
+											<span style={ { color: getStrengthColor( passwordStrength ), fontWeight: '500' } }>
+												{ passwordStrength
+													? passwordStrength.replace( '-', ' ' ).toUpperCase()
+													: '' }
+											</span>
+										</div>
 										<div
 											style={ {
-												height: '100%',
-												width: strengthWidths[ passwordStrength ] || strengthWidths.default,
-												backgroundColor: getStrengthColor(),
-												transition: 'width 0.3s ease-in-out',
+												height: '4px',
+												width: '100%',
+												backgroundColor: '#e1e5e9',
+												borderRadius: '2px',
+												overflow: 'hidden',
 											} }
-										/>
+										>
+											<div
+												style={ {
+													height: '100%',
+													width: strengthWidths[ passwordStrength ] || strengthWidths.default,
+													backgroundColor: getStrengthColor( passwordStrength ),
+													transition: 'width 0.3s ease-in-out',
+												} }
+											/>
+										</div>
 									</div>
-								</div>
-							) }
-							<Button
-								variant="secondary"
-								onClick={ () => {
-									fetchStrongPassword().then( ( password ) => {
-										if ( password ) {
-											handleInputChange( 'password', password );
-										}
-									} );
-								} }
-								style={ { width: 'fit-content' } }
-							>
-								{ __( 'Generate strong password', 'oneaccess' ) }
-							</Button>
-						</VStack>
-					</Grid>
+								) }
+								<Button
+									variant="secondary"
+									onClick={ () => {
+										fetchStrongPassword().then( ( password ) => {
+											if ( password ) {
+												handleInputChange( 'password', password );
+											}
+										} );
+									} }
+									style={ { width: 'fit-content', marginBlockStart: '12px' } }
+								>
+									{ __( 'Generate strong password', 'oneaccess' ) }
+								</Button>
+							</VStack>
+						</Grid>
+					</form>
 
 					{ notice.message && (
 						<Snackbar
@@ -390,6 +378,7 @@ const CreateUser = ( { availableSites } ) => {
 											);
 										}
 									} }
+									__nextHasNoMarginBottom
 								/>
 								<Button
 									variant="link"
@@ -472,6 +461,7 @@ const CreateUser = ( { availableSites } ) => {
 														</div>
 													}
 													checked={ selectedSites.some( ( s ) => s.siteUrl === site.siteUrl ) }
+													__nextHasNoMarginBottom
 												/>
 											</div>
 										) ) }
@@ -503,7 +493,7 @@ const CreateUser = ( { availableSites } ) => {
 								isBusy={ isUserCreating }
 							>
 								<Dashicon icon="admin-users" style={ { marginRight: '8px' } } />
-								{ isUserCreating ? __( 'Creating User…', 'oneaccess' ) : __( 'Create User on Sites', 'oneaccess' ) }
+								{ __( 'Create User on Sites', 'oneaccess' ) }
 							</Button>
 						</HStack>
 					</VStack>
@@ -514,5 +504,3 @@ const CreateUser = ( { availableSites } ) => {
 };
 
 export default CreateUser;
-
-/* eslint-enable @wordpress/no-unsafe-wp-apis */

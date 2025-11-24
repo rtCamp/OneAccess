@@ -54,15 +54,12 @@ class Hooks {
 	 * @return string
 	 */
 	public function add_body_class_for_modal( $classes ): string {
-		$current_screen = get_current_screen();
+		$current_screen = Utils::get_current_screen();
 		if ( ! $current_screen || 'plugins' !== $current_screen->base ) {
 			return $classes;
 		}
 
-		// get oneaccess_site_type_transient transient to check if site type is set.
-		$site_type_transient = get_transient( Constants::ONEACCESS_SITE_TYPE_TRANSIENT );
-		if ( $site_type_transient ) {
-			// If site type is already set, do not show the modal.
+		if ( Utils::is_site_type_set() ) {
 			return $classes;
 		}
 
@@ -77,7 +74,7 @@ class Hooks {
 	 * @return void
 	 */
 	public function add_site_selection_modal(): void {
-		$current_screen = get_current_screen();
+		$current_screen = Utils::get_current_screen();
 		if ( ! $current_screen || 'plugins' !== $current_screen->base ) {
 			return;
 		}
@@ -85,10 +82,7 @@ class Hooks {
 			return;
 		}
 
-		// get oneaccess_site_type_transient transient to check if site type is set.
-		$site_type_transient = get_transient( Constants::ONEACCESS_SITE_TYPE_TRANSIENT );
-		if ( $site_type_transient ) {
-			// If site type is already set, do not show the modal.
+		if ( Utils::is_site_type_set() ) {
 			return;
 		}
 
@@ -155,11 +149,6 @@ class Hooks {
 	 * @return string
 	 */
 	public function add_body_class_for_missing_sites( $classes ): string {
-		$current_screen = get_current_screen();
-
-		if ( ! $current_screen ) {
-			return $classes;
-		}
 
 		// get oneaccess_shared_sites option.
 		$shared_sites = get_option( Constants::ONEACCESS_SHARED_SITES, array() );

@@ -134,7 +134,7 @@ class Basic_Options {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'health_check' ),
-				'permission_callback' => 'oneaccess_validate_api_key_health_check',
+				'permission_callback' => '\oneaccess_validate_api_key_health_check',
 			)
 		);
 
@@ -242,9 +242,6 @@ class Basic_Options {
 
 		update_option( Constants::ONEACCESS_SITE_TYPE, $site_type, false );
 
-		// set transient to indicating that site type has been set for infinite time.
-		set_transient( Constants::ONEACCESS_SITE_TYPE_TRANSIENT, true, 0 );
-
 		// Create user roles based on site type.
 		User_Roles::create_brand_admin_role();
 		User_Roles::create_network_admin_role();
@@ -321,33 +318,6 @@ class Basic_Options {
 		}
 
 		update_option( Constants::ONEACCESS_SHARED_SITES, $sites_data, false );
-
-		// get oneaccess_new_users option and if site url is same but name if different then update the name.
-		$new_users = get_option( Constants::ONEACCESS_NEW_USERS, array() );
-		$updated   = false;
-
-		foreach ( $sites_data as $site ) {
-			if ( isset( $site['siteUrl'] ) ) {
-				foreach ( array_keys( $new_users ) as $user_key ) {
-					$user_sites = $new_users[ $user_key ]['sites'] ?? array();
-					foreach ( array_keys( $user_sites ) as $site_key ) {
-						if ( isset( $user_sites[ $site_key ]['site_url'] ) && $user_sites[ $site_key ]['site_url'] === $site['siteUrl'] ) {
-							if ( isset( $site['siteName'] ) && ( ! isset( $user_sites[ $site_key ]['site_name'] ) || $user_sites[ $site_key ]['site_name'] !== $site['siteName'] ) ) {
-								$new_users[ $user_key ]['sites'][ $site_key ]['site_name'] = $site['siteName'];
-								if ( false === $updated ) {
-									$updated = true;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// Save the updated array back to the options table.
-		if ( $updated ) {
-			update_option( Constants::ONEACCESS_NEW_USERS, $new_users, false );
-		}
 
 		return new \WP_REST_Response(
 			array(

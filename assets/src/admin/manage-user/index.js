@@ -1,9 +1,15 @@
+/**
+ * WordPress dependencies
+ */
 import { createRoot, useState, useEffect, useCallback } from '@wordpress/element';
 import { Icon, plus, edit, people } from '@wordpress/icons';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
 import { Spinner, Snackbar } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
 import CreateUser from '../../components/CreateUser';
 import SharedUsers from '../../components/SharedUsers';
 import ProfileRequests from '../../components/ProfileRequests';
@@ -25,13 +31,13 @@ const TabPanel = () => {
 	const fetchProfileRequestsCount = useCallback( async () => {
 		try {
 			const response = await fetch(
-				`${ API_NAMESPACE }/all-profile-requests?${ new Date().getTime().toString() }`,
+				`${ API_NAMESPACE }/get-profile-requests?${ new Date().getTime().toString() }`,
 				{
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
+						'Cache-Control': 'no-cache',
 					},
 				},
 			);
@@ -39,7 +45,7 @@ const TabPanel = () => {
 				throw new Error( 'Failed to fetch profile requests count' );
 			}
 			const data = await response.json();
-			setProfileRequestsCount( data.count || 0 );
+			setProfileRequestsCount( data?.total_pending_count || 0 );
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -139,7 +145,7 @@ const TabPanel = () => {
 			title: 'Profile Requests',
 			icon: edit,
 			content: (
-				<ProfileRequests setProfileRequestsCount={ setProfileRequestsCount } />
+				<ProfileRequests setProfileRequestsCount={ setProfileRequestsCount } availableSites={ availableSites } />
 			),
 		},
 	];

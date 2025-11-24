@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import {
@@ -5,7 +8,7 @@ import {
 	Snackbar,
 	Card,
 	CardBody,
-	__experimentalGrid as Grid, // eslint-disable-line @wordpress/no-unsafe-wp-apis
+	__experimentalGrid as Grid,
 	SelectControl,
 	Button,
 	Modal,
@@ -20,9 +23,8 @@ const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
 const API_KEY = OneAccess.apiKey;
 const PER_PAGE = 20;
-const PAGE = 1;
 
-const ProfileRequests = ( { setProfileRequestsCount } ) => {
+const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 	const [ isLoading, setIsLoading ] = useState( false );
 	const [ notice, setNotice ] = useState( {
 		type: '',
@@ -30,27 +32,43 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 	} );
 	const [ searchTerm, setSearchTerm ] = useState( '' );
 	const [ selectedSiteFilter, setSelectedSiteFilter ] = useState( '' );
-	const [ requestStatusFilter, setRequestStatusFilter ] = useState( 'all' );
+	const [ requestStatusFilter, setRequestStatusFilter ] = useState( '' );
 	const [ allSitesProfileRequests, setAllSitesProfileRequests ] = useState( [] );
 	const [ isViewModalOpen, setIsViewModalOpen ] = useState( false );
 	const [ isRejectModalOpen, setIsRejectModalOpen ] = useState( false );
 	const [ selectedRequest, setSelectedRequest ] = useState( null );
 	const [ rejectionComment, setRejectionComment ] = useState( '' );
 	const [ isProcessing, setIsProcessing ] = useState( false );
-	const [ page, setPage ] = useState( PAGE );
+	const [ page, setPage ] = useState( 1 );
 	const [ totalPages, setTotalPages ] = useState( 1 );
+	const [ hasMore, setHasMore ] = useState( false );
 
-	const fetchProfileRequests = useCallback( async () => {
+	const fetchProfileRequests = useCallback( async ( cursor = 0 ) => {
 		setIsLoading( true );
 		try {
+			// Build query params
+			const params = new URLSearchParams();
+			if ( selectedSiteFilter ) {
+				params.append( 'site', selectedSiteFilter );
+			}
+			if ( requestStatusFilter ) {
+				params.append( 'status', requestStatusFilter );
+			}
+			if ( searchTerm ) {
+				params.append( 'search_query', searchTerm );
+			}
+			if ( cursor > 0 ) {
+				params.append( 'cursor', cursor.toString() );
+			}
+
 			const response = await fetch(
-				`${ API_NAMESPACE }/all-profile-requests?${ new Date().getTime().toString() }`,
+				`${ API_NAMESPACE }/get-profile-requests?${ params.toString() }&t=${ Date.now() }`,
 				{
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
+						'Cache-Control': 'no-cache',
 					},
 				},
 			);
@@ -64,9 +82,39 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 			}
 
 			const data = await response.json();
-			setAllSitesProfileRequests( data.profile_requests || [] );
-			setProfileRequestsCount( data.count || 0 );
-			setTotalPages( Math.ceil( ( data.count || 0 ) / PER_PAGE ) );
+
+			// Transform the data to match the component structure
+			const transformedRequests = ( data.profile_requests || [] ).map( ( request ) => {
+				const requestData = request.request_data || {};
+
+				return {
+					id: request.id,
+					user_id: request.user_id,
+					user_name: requestData.user_name || '',
+					user_email: requestData.user_email || '',
+					user_login: requestData.user_login || '',
+					requested_by: requestData.requested_by || '',
+					requested_at: requestData.requested_at || request.created_at,
+					status: request.status,
+					site_name: request.site_name || '',
+					metadata: requestData.metadata || {},
+					data: requestData.data || {},
+					rejection_comment: request.comment || '',
+					created_at: request.created_at,
+					updated_at: request.updated_at,
+				};
+			} );
+
+			setAllSitesProfileRequests( transformedRequests );
+
+			// Set total pending count for badge (always unfiltered total pending)
+			const pendingCount = data.total_pending_count || 0;
+			setProfileRequestsCount( pendingCount );
+
+			// Get pagination data from API
+			const pagination = data.pagination || {};
+			setHasMore( pagination.has_more || false );
+			setTotalPages( pagination.total_pages || 1 );
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -75,7 +123,7 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 		} finally {
 			setIsLoading( false );
 		}
-	}, [ setProfileRequestsCount ] );
+	}, [ setProfileRequestsCount, selectedSiteFilter, requestStatusFilter, searchTerm ] );
 
 	const handleAcceptRequest = async ( request ) => {
 		setIsProcessing( true );
@@ -90,10 +138,13 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 						'X-OneAccess-Token': API_KEY,
 					},
 					body: JSON.stringify( {
-						user_email: request?.user_email,
-						user_login: request?.user_login,
-						site_name: request?.site_name,
-						data: request?.data,
+						request_id: request.id,
+						user_id: request.user_id,
+						user_email: request.user_email,
+						user_login: request.user_login,
+						site_name: request.site_name,
+						metadata: request.metadata,
+						data: request.data,
 					} ),
 				},
 			);
@@ -106,7 +157,7 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 				type: 'success',
 				message: __( 'Profile request approved successfully.', 'oneaccess' ),
 			} );
-			fetchProfileRequests(); // Refresh the list
+			fetchProfileRequests();
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -138,8 +189,10 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 						'X-OneAccess-Token': API_KEY,
 					},
 					body: JSON.stringify( {
-						user_email: selectedRequest?.user_email,
-						site_name: selectedRequest?.site_name,
+						request_id: selectedRequest.id,
+						user_id: selectedRequest.user_id,
+						user_email: selectedRequest.user_email,
+						site_name: selectedRequest.site_name,
 						rejection_comment: rejectionComment,
 					} ),
 				},
@@ -153,7 +206,7 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 				type: 'success',
 				message: __( 'Profile request rejected successfully.', 'oneaccess' ),
 			} );
-			fetchProfileRequests(); // Refresh the list
+			fetchProfileRequests();
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',
@@ -174,35 +227,43 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 
 	const openRejectModal = () => {
 		setIsRejectModalOpen( true );
+		setIsViewModalOpen( false );
 	};
 
 	const closeModals = () => {
 		setIsViewModalOpen( false );
+		setIsRejectModalOpen( false );
 		setRejectionComment( '' );
 	};
 
 	const renderChangesTable = ( request ) => {
 		const changes = [];
 
-		// Add metadata changes
-		if ( request.metadata ) {
-			Object.entries( request.metadata ).forEach( ( [ key, value ] ) => {
-				changes.push( {
-					field: key.replace( /_/g, ' ' ).replace( /\b\w/g, ( l ) => l.toUpperCase() ),
-					oldValue: value.old || __( 'Empty', 'oneaccess' ),
-					newValue: value.new || __( 'Empty', 'oneaccess' ),
-				} );
+		// Add data changes (user fields like display_name, first_name, etc.)
+		if ( request.data && typeof request.data === 'object' && Object.keys( request.data ).length > 0 ) {
+			Object.entries( request.data ).forEach( ( [ key, value ] ) => {
+				if ( value && typeof value === 'object' && ( 'old' in value || 'new' in value ) ) {
+					changes.push( {
+						field: key.replace( /_/g, ' ' ).replace( /\b\w/g, ( l ) => l.toUpperCase() ),
+						oldValue: value.old || __( 'Empty', 'oneaccess' ),
+						newValue: value.new || __( 'Empty', 'oneaccess' ),
+						type: 'data',
+					} );
+				}
 			} );
 		}
 
-		// Add data changes
-		if ( request.data ) {
-			Object.entries( request.data ).forEach( ( [ key, value ] ) => {
-				changes.push( {
-					field: key.replace( /_/g, ' ' ).replace( /\b\w/g, ( l ) => l.toUpperCase() ),
-					oldValue: value.old || __( 'Empty', 'oneaccess' ),
-					newValue: value.new || __( 'Empty', 'oneaccess' ),
-				} );
+		// Add metadata changes (custom fields like description, bio, etc.)
+		if ( request.metadata && typeof request.metadata === 'object' && Object.keys( request.metadata ).length > 0 ) {
+			Object.entries( request.metadata ).forEach( ( [ key, value ] ) => {
+				if ( value && typeof value === 'object' && ( 'old' in value || 'new' in value ) ) {
+					changes.push( {
+						field: key.replace( /_/g, ' ' ).replace( /\b\w/g, ( l ) => l.toUpperCase() ),
+						oldValue: value.old || __( 'Empty', 'oneaccess' ),
+						newValue: value.new || __( 'Empty', 'oneaccess' ),
+						type: 'metadata',
+					} );
+				}
 			} );
 		}
 
@@ -223,11 +284,15 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 							</td>
 						</tr>
 					) : (
-						changes?.map( ( change, index ) => (
+						changes.map( ( change, index ) => (
 							<tr key={ index }>
 								<td><strong>{ change.field }</strong></td>
-								<td>{ decodeEntities( change.oldValue ) }</td>
-								<td>{ decodeEntities( change.newValue ) }</td>
+								<td style={ { wordBreak: 'break-word', whiteSpace: 'pre-wrap' } }>
+									{ decodeEntities( String( change.oldValue ) ) }
+								</td>
+								<td style={ { wordBreak: 'break-word', whiteSpace: 'pre-wrap' } }>
+									{ decodeEntities( String( change.newValue ) ) }
+								</td>
 							</tr>
 						) )
 					) }
@@ -236,56 +301,62 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 		);
 	};
 
-	// Filter and search functionality
-	const filteredRequests = allSitesProfileRequests.filter( ( request ) => {
-		// Site filter
-		const matchesSite = selectedSiteFilter === '' ||
-			request.site_name.toLowerCase().includes( selectedSiteFilter.toLowerCase() );
-
-		// Search filter
-		const searchLower = searchTerm.toLowerCase();
-		const matchesSearch = searchTerm === '' ||
-			request.user_name.toLowerCase().includes( searchLower ) ||
-			request.user_email.toLowerCase().includes( searchLower ) ||
-			request.requested_by.toLowerCase().includes( searchLower );
-
-		// Status filter
-		const matchesStatus = requestStatusFilter === 'all' ||
-			request.status === requestStatusFilter;
-
-		return matchesSite && matchesSearch && matchesStatus;
-	} );
-
-	// Get unique site names for filter dropdown
+	// Get unique site names for filter dropdown (from API, ensure iterable)
 	const siteOptions = [
 		{ label: __( 'All Sites', 'oneaccess' ), value: '' },
-		...Array.from( new Set( allSitesProfileRequests?.map( ( r ) => r.site_name ) ) )
-			?.map( ( siteName ) => ( { label: siteName, value: siteName } ) ),
+		...( Array.isArray( availableSites ) ? availableSites : [] ).map( ( site ) => ( {
+			label: decodeEntities( site?.siteName ),
+			value: site?.siteName,
+		} ) ),
 	];
 
-	// request status filter options
+	// Request status filter options
 	const statusOptions = [
-		{ label: __( 'All Status', 'oneaccess' ), value: 'all' },
+		{ label: __( 'All Status', 'oneaccess' ), value: '' },
 		{ label: __( 'Pending', 'oneaccess' ), value: 'pending' },
 		{ label: __( 'Rejected', 'oneaccess' ), value: 'rejected' },
+		{ label: __( 'Approved', 'oneaccess' ), value: 'approved' },
 	];
 
-	const getOptionByValue = ( value ) => {
-		return statusOptions.find( ( option ) => option.value === value )?.label;
+	const getStatusLabel = ( value ) => {
+		const option = statusOptions.find( ( opt ) => opt.value === value );
+		return option ? option.label : value;
 	};
 
-	useEffect( () => {
-		fetchProfileRequests();
-	}, [] ); /* eslint-disable-line react-hooks/exhaustive-deps */
+	const getStatusColor = ( status ) => {
+		switch ( status ) {
+			case 'pending':
+				return { backgroundColor: '#ffc107', color: '#000' };
+			case 'rejected':
+				return { backgroundColor: '#dc3545', color: '#fff' };
+			case 'approved':
+				return { backgroundColor: '#28a745', color: '#fff' };
+			default:
+				return { backgroundColor: '#6c757d', color: '#fff' };
+		}
+	};
 
-	const filterUserRequestsForPagination = useCallback( () => {
-		const startIndex = ( page - 1 ) * PER_PAGE;
-		return filteredRequests.slice( startIndex, startIndex + PER_PAGE );
-	}, [ filteredRequests, page ] );
-
+	// Initial load
 	useEffect( () => {
-		setTotalPages( Math.ceil( filteredRequests.length / PER_PAGE ) );
-	}, [ filteredRequests ] );
+		fetchProfileRequests( 0 );
+	}, [] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Refetch when filters change (reset to page 1)
+	useEffect( () => {
+		setPage( 1 );
+		setHasMore( false );
+		fetchProfileRequests( 0 );
+	}, [ selectedSiteFilter, requestStatusFilter, searchTerm ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// No client-side filtering/pagination needed - results come pre-paginated/filtered from API
+	const displayedRequests = allSitesProfileRequests;
+
+	// Handle page change
+	const handlePageChange = ( newPage ) => {
+		setPage( newPage );
+		const newCursor = ( newPage - 1 ) * PER_PAGE;
+		fetchProfileRequests( newCursor );
+	};
 
 	return (
 		<>
@@ -300,21 +371,27 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 							value={ searchTerm }
 							onChange={ setSearchTerm }
 							label={ __( 'Search Requests', 'oneaccess' ) }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 						<SelectControl
 							label={ __( 'Filter by site', 'oneaccess' ) }
 							value={ selectedSiteFilter }
 							options={ siteOptions }
 							onChange={ setSelectedSiteFilter }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 						<SelectControl
 							label={ __( 'Filter by status', 'oneaccess' ) }
 							value={ requestStatusFilter }
 							options={ statusOptions }
 							onChange={ setRequestStatusFilter }
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
 						/>
 					</Grid>
-					<table className="wp-list-table widefat fixed striped">
+					<table className="wp-list-table widefat fixed striped " style={ { marginTop: '16px' } }>
 						<thead>
 							<tr>
 								<th>{ __( 'Site', 'oneaccess' ) }</th>
@@ -334,74 +411,67 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 									</td>
 								</tr>
 							) }
-							{ ! isLoading && filteredRequests?.length === 0 && (
+							{ ! isLoading && displayedRequests.length === 0 && (
 								<tr>
 									<td colSpan="7" style={ { textAlign: 'center' } }>
 										{ __( 'No profile requests found.', 'oneaccess' ) }
 									</td>
 								</tr>
 							) }
-							{ filterUserRequestsForPagination()?.length > 0 && (
-								filterUserRequestsForPagination()?.map( ( request, index ) => (
-									<tr key={ `${ request.user_email }-${ request.site_name }-${ index }` }>
-										<td>{ decodeEntities( request.site_name ) }</td>
-										<td>{ decodeEntities( request.user_name ) }</td>
-										<td>{ request.user_email }</td>
-										<td>{ decodeEntities( request.requested_by ) }</td>
-										<td>{ request.requested_at }</td>
-										<td>
-											<span
-												className={ `status-badge status-${ getOptionByValue( request.status ) ?? request.status }` }
-												style={ {
-													display: 'inline-block',
-													padding: '2px 8px',
-													borderRadius: '4px',
-													fontSize: '12px',
-													fontWeight: '400',
-													backgroundColor: request.status === 'pending' ? '#ffc107' : '#dc3545',
-													color: request.status === 'pending' ? '#000' : '#fff',
-												} }
-											>
-												{ getOptionByValue( request.status ) ?? request.status }
-											</span>
-										</td>
-										<td>
-											<Button
-												variant="primary"
-												onClick={ () => openViewModal( request ) }
-												disabled={ isProcessing }
-											>
-												{ __( 'View Details', 'oneaccess' ) }
-											</Button>
-										</td>
-									</tr>
-								) )
-							) }
+							{ ! isLoading && displayedRequests.map( ( request, index ) => (
+								<tr key={ `${ request.id }-${ request.site_name }-${ index }` }>
+									<td>{ decodeEntities( request.site_name ) }</td>
+									<td>{ decodeEntities( request.user_name ) }</td>
+									<td>{ request.user_email }</td>
+									<td>{ decodeEntities( request.requested_by ) }</td>
+									<td>{ request.requested_at }</td>
+									<td>
+										<span
+											className={ `status-badge status-${ request.status }` }
+											style={ {
+												display: 'inline-block',
+												padding: '2px 8px',
+												borderRadius: '4px',
+												fontSize: '12px',
+												fontWeight: '400',
+												...getStatusColor( request.status ),
+											} }
+										>
+											{ getStatusLabel( request.status ) }
+										</span>
+									</td>
+									<td>
+										<Button
+											variant="primary"
+											onClick={ () => openViewModal( request ) }
+											disabled={ isProcessing }
+										>
+											{ __( 'View Details', 'oneaccess' ) }
+										</Button>
+									</td>
+								</tr>
+							) ) }
 						</tbody>
 					</table>
-					{ (
-						<div style={ { marginTop: '16px', display: 'flex', justifyContent: 'center' } }>
-							<Button
-								variant="secondary"
-								onClick={ () => setPage( ( prev ) => Math.max( prev - 1, 1 ) ) }
-								disabled={ page === 1 }
-								style={ { marginRight: '8px' } }
-							>
-								{ __( 'Previous', 'oneaccess' ) }
-							</Button>
-							<span style={ { alignSelf: 'center' } }>
-								{ __( 'Page', 'oneaccess' ) } { page } { __( 'of', 'oneaccess' ) } { totalPages === 0 ? 1 : totalPages }
-							</span>
-							<Button
-								variant="secondary"
-								onClick={ () => setPage( ( prev ) => Math.min( prev + 1, totalPages ) ) }
-								disabled={ page >= totalPages }
-								style={ { marginLeft: '8px' } }
-							>
-								{ __( 'Next', 'oneaccess' ) }
-							</Button>
-						</div>
-					) }
+					<div style={ { marginTop: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' } }>
+						<Button
+							variant="secondary"
+							onClick={ () => handlePageChange( page - 1 ) }
+							disabled={ page === 1 || isLoading }
+						>
+							{ __( 'Previous', 'oneaccess' ) }
+						</Button>
+						<span>
+							{ __( 'Page', 'oneaccess' ) } { page } { __( 'of', 'oneaccess' ) } { totalPages }
+						</span>
+						<Button
+							variant="secondary"
+							onClick={ () => handlePageChange( page + 1 ) }
+							disabled={ ! hasMore || isLoading }
+						>
+							{ __( 'Next', 'oneaccess' ) }
+						</Button>
+					</div>
 				</CardBody>
 			</Card>
 
@@ -414,13 +484,13 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 					size="medium"
 					shouldCloseOnClickOutside={ true }
 				>
-					<div style={ { marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(2,1fr)' } }>
-						<p style={ { margin: '0' } } ><strong>{ __( 'User:', 'oneaccess' ) }</strong> { decodeEntities( selectedRequest.user_name ) }</p>
+					<div style={ { marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '12px' } }>
+						<p style={ { margin: '0' } }><strong>{ __( 'User:', 'oneaccess' ) }</strong> { decodeEntities( selectedRequest.user_name ) }</p>
 						<p style={ { margin: '0' } }><strong>{ __( 'Email:', 'oneaccess' ) }</strong> { selectedRequest.user_email }</p>
 						<p style={ { margin: '0' } }><strong>{ __( 'Site:', 'oneaccess' ) }</strong> { decodeEntities( selectedRequest.site_name ) }</p>
 						<p style={ { margin: '0' } }><strong>{ __( 'Requested By:', 'oneaccess' ) }</strong> { decodeEntities( selectedRequest.requested_by ) }</p>
 						<p style={ { margin: '0' } }><strong>{ __( 'Requested At:', 'oneaccess' ) }</strong> { selectedRequest.requested_at }</p>
-						<p style={ { margin: '0' } }><strong>{ __( 'Status:', 'oneaccess' ) }</strong> { selectedRequest.status }</p>
+						<p style={ { margin: '0' } }><strong>{ __( 'Status:', 'oneaccess' ) }</strong> { getStatusLabel( selectedRequest.status ) }</p>
 					</div>
 
 					<h3>{ __( 'Requested Changes:', 'oneaccess' ) }</h3>
@@ -440,21 +510,20 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 								variant="primary"
 								onClick={ () => handleAcceptRequest( selectedRequest ) }
 								disabled={ isProcessing }
+								isBusy={ isProcessing }
 							>
-								{ isProcessing ? __( 'Processing…', 'oneaccess' ) : __( 'Accept', 'oneaccess' ) }
+								{ __( 'Accept', 'oneaccess' ) }
 							</Button>
 						</div>
 					) }
-					{
-						selectedRequest.status === 'rejected' && selectedRequest.rejection_comment.trim().length > 0 && (
-							<div style={ { marginTop: '20px', background: '#fee2e2', borderLeft: '4px solid #dc2626', borderRadius: '4px', padding: '12px 16px' } }>
-								<p style={ { fontSize: '15px', color: '#7f1d1d', margin: '0' } }>
-									<strong style={ { color: '#991b1b', fontWeight: '600' } }>{ __( 'Rejection Comment: ', 'oneaccess' ) }</strong>
-									<span>{ decodeEntities( selectedRequest.rejection_comment ) }</span>
-								</p>
-							</div>
-						)
-					}
+					{ selectedRequest.status === 'rejected' && selectedRequest.rejection_comment && selectedRequest.rejection_comment.trim().length > 0 && (
+						<div style={ { marginTop: '20px', background: '#fee2e2', borderLeft: '4px solid #dc2626', borderRadius: '4px', padding: '12px 16px' } }>
+							<p style={ { fontSize: '15px', color: '#7f1d1d', margin: '0' } }>
+								<strong style={ { color: '#991b1b', fontWeight: '600' } }>{ __( 'Rejection Comment: ', 'oneaccess' ) }</strong>
+								<span>{ decodeEntities( selectedRequest.rejection_comment ) }</span>
+							</p>
+						</div>
+					) }
 				</Modal>
 			) }
 
@@ -462,7 +531,10 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 			{ isRejectModalOpen && (
 				<Modal
 					title={ __( 'Reject Profile Updates Changes', 'oneaccess' ) }
-					onRequestClose={ () => setIsRejectModalOpen( false ) }
+					onRequestClose={ () => {
+						setIsRejectModalOpen( false );
+						setRejectionComment( '' );
+					} }
 					size="medium"
 					shouldCloseOnClickOutside={ true }
 				>
@@ -472,6 +544,7 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 						value={ rejectionComment }
 						onChange={ setRejectionComment }
 						rows={ 4 }
+						__nextHasNoMarginBottom
 					/>
 					<div style={ { marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' } }>
 						<Button
@@ -491,8 +564,9 @@ const ProfileRequests = ( { setProfileRequestsCount } ) => {
 							onClick={ handleRejectRequest }
 							isDestructive
 							disabled={ isProcessing || ! rejectionComment.trim() }
+							isBusy={ isProcessing }
 						>
-							{ isProcessing ? __( 'Rejecting…', 'oneaccess' ) : __( 'Reject Request', 'oneaccess' ) }
+							{ __( 'Reject Request', 'oneaccess' ) }
 						</Button>
 					</div>
 				</Modal>

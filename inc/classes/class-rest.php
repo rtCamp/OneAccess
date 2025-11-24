@@ -7,7 +7,7 @@
 
 namespace OneAccess;
 
-use OneAccess\REST\{ Basic_Options, Brand_Site, Users };
+use OneAccess\REST\{ Basic_Options, Brand_Site, Users, Actions };
 use OneAccess\Traits\Singleton;
 
 /**
@@ -36,6 +36,7 @@ class REST {
 		Basic_Options::get_instance();
 		Users::get_instance();
 		Brand_Site::get_instance();
+		Actions::get_instance();
 
 		// fix cors headers for REST API requests.
 		add_filter( 'rest_pre_serve_request', array( $this, 'add_cors_headers' ), PHP_INT_MAX - 20, 4 );

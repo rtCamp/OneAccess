@@ -1,3 +1,6 @@
+/**
+ * WordPress dependencies
+ */
 import { useEffect, useState, useCallback } from '@wordpress/element';
 import {
 	TextareaControl,
@@ -213,6 +216,7 @@ const SiteSettings = () => {
 							value={ apiKey }
 							disabled={ true }
 							help={ __( 'This key is used for secure communication with the Governing site.', 'oneaccess' ) }
+							__nextHasNoMarginBottom
 						/>
 					</div>
 				</CardBody>
@@ -238,6 +242,8 @@ const SiteSettings = () => {
 						value={ governingSite }
 						disabled={ true }
 						help={ __( 'This is the URL of the Governing site this Brand site is connected to.', 'oneaccess' ) }
+						__next40pxDefaultSize
+						__nextHasNoMarginBottom
 					/>
 				</CardBody>
 			</Card>
