@@ -57,9 +57,9 @@ const SiteTable = ( { sites, onEdit, onDelete, setFormData, setShowModal } ) => 
 						) }
 						{ sites?.map( ( site, index ) => (
 							<tr key={ index }>
-								<td>{ site?.siteName }</td>
-								<td>{ site?.siteUrl }</td>
-								<td><code>{ site.apiKey.substring( 0, 10 ) }...</code></td>
+								<td>{ site?.name }</td>
+								<td>{ site?.url }</td>
+								<td><code>{ site?.api_key?.substring( 0, 10 ) }...</code></td>
 								<td>
 									<Button
 										variant="secondary"

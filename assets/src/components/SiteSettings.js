@@ -17,7 +17,7 @@ import { __ } from '@wordpress/i18n';
 
 const API_NAMESPACE = OneAccessSettings.restUrl + '/oneaccess/v1';
 const NONCE = OneAccessSettings.restNonce;
-const API_KEY = OneAccessSettings.apiKey;
+const API_KEY = OneAccessSettings.api_key;
 
 const SiteSettings = () => {
 	const [ apiKey, setApiKey ] = useState( '' );

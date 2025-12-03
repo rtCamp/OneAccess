@@ -14,14 +14,14 @@ import SiteSettings from '../../components/SiteSettings';
 
 const API_NAMESPACE = OneAccessSettings.restUrl + '/oneaccess/v1';
 const NONCE = OneAccessSettings.restNonce;
-const API_KEY = OneAccessSettings.apiKey;
+const API_KEY = OneAccessSettings.api_key;
 
 const OneAccessSettingsPage = () => {
 	const [ siteType, setSiteType ] = useState( '' );
 	const [ showModal, setShowModal ] = useState( false );
 	const [ editingIndex, setEditingIndex ] = useState( null );
 	const [ sites, setSites ] = useState( [] );
-	const [ formData, setFormData ] = useState( { siteName: '', siteUrl: '', apiKey: '' } );
+	const [ formData, setFormData ] = useState( { name: '', url: '', api_key: '' } );
 	const [ notice, setNotice ] = useState( {
 		type: 'success',
 		message: '',
@@ -55,8 +55,8 @@ const OneAccessSettingsPage = () => {
 				if ( siteTypeData?.site_type ) {
 					setSiteType( siteTypeData.site_type );
 				}
-				if ( Array.isArray( sitesData?.shared_sites ) ) {
-					setSites( sitesData?.shared_sites );
+				if ( Array.isArray( sitesData?.sites_data ) ) {
+					setSites( sitesData?.sites_data );
 				}
 			} catch {
 				setNotice( {
@@ -91,30 +91,36 @@ const OneAccessSettingsPage = () => {
 				},
 				body: JSON.stringify( { sites_data: updated } ),
 			} );
+
+			const result = await response.json();
+
 			if ( ! response.ok ) {
 				console.error( 'Error saving Brand site:', response.statusText ); // eslint-disable-line no-console
 				return response;
 			}
 
-			if ( sites.length === 0 ) {
+			const sitesData = result.sites_data || [];
+			setSites( sitesData );
+
+			if ( sitesData.length === 0 ) {
 				window.location.reload();
 			}
 
-			setSites( updated );
 			setNotice( {
 				type: 'success',
 				message: __( 'Brand Site saved successfully.', 'oneaccess' ),
 			} );
+			return response;
 		} catch {
 			setNotice( {
 				type: 'error',
 				message: __( 'Error saving Brand site. Please try again later.', 'oneaccess' ),
 			} );
+		} finally {
+			setFormData( { name: '', url: '', api_key: '' } );
+			setShowModal( false );
+			setEditingIndex( null );
 		}
-
-		setFormData( { siteName: '', siteUrl: '', apiKey: '' } );
-		setShowModal( false );
-		setEditingIndex( null );
 	};
 
 	const handleDelete = async ( index ) => {
@@ -197,7 +203,7 @@ const OneAccessSettingsPage = () => {
 					onClose={ () => {
 						setShowModal( false );
 						setEditingIndex( null );
-						setFormData( { siteName: '', siteUrl: '', apiKey: '' } );
+						setFormData( { name: '', url: '', api_key: '' } );
 					} }
 					editing={ editingIndex !== null }
 					originalData={ sites[ editingIndex ] }
