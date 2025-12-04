@@ -34,7 +34,6 @@ class Assets implements Registrable {
 	public const ONBOARDING_SCRIPT_HANDLE   = self::PREFIX . 'setup';
 	public const MANAGE_USERS_SCRIPT_HANDLE = self::PREFIX . 'manage-users';
 	public const ADMIN_USER_STYLES_HANDLE   = self::PREFIX . 'admin-user';
-
 	public const USER_PROFILE_SCRIPT_HANDLE = self::PREFIX . 'user-profile';
 
 	/**
@@ -109,7 +108,6 @@ class Assets implements Registrable {
 		$this->register_style( self::MANAGE_USERS_SCRIPT_HANDLE, 'manage-users', [ 'wp-components' ] );
 
 		$this->register_style( self::ADMIN_USER_STYLES_HANDLE, 'admin-user' );
-
 		$this->register_script( self::USER_PROFILE_SCRIPT_HANDLE, 'user-profile' );
 
 		$this->register_style(
