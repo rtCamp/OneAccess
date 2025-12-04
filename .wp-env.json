@@ -24,6 +24,6 @@
 		}
 	},
 	"lifecycleScripts": {
-		"afterStart": "wp-env run cli wp rewrite structure /%postname%/ --hard && wp-env run cli --env-cwd=wp-content/plugins/oneaccess composer install --no-dev --no-interaction"
+		"afterStart": "wp-env run cli wp rewrite structure /%postname%/ --hard"
 	}
 }
