@@ -233,7 +233,7 @@ class Basic_Options_Controller extends Abstract_REST_Controller {
 			if ( isset( $site['url'] ) && in_array( $site['url'], $urls, true ) ) {
 				return new \WP_Error( 'duplicate_site_url', __( 'Brand Site already exists.', 'oneaccess' ), [ 'status' => 400 ] );
 			}
-			$urls[] = $site['url'] ?? '';
+			$urls[] = trailingslashit( $site['url'] ) ?? '';
 		}
 
 		// add unique id to each site if not exists.

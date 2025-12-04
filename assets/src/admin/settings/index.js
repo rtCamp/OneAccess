@@ -92,17 +92,17 @@ const OneAccessSettingsPage = () => {
 				body: JSON.stringify( { sites_data: updated } ),
 			} );
 
-			const result = await response.json();
-
 			if ( ! response.ok ) {
 				console.error( 'Error saving Brand site:', response.statusText ); // eslint-disable-line no-console
 				return response;
 			}
 
+			const result = await response.json();
+
 			const sitesData = result.sites_data || [];
 			setSites( sitesData );
 
-			if ( sitesData.length === 0 ) {
+			if ( sitesData.length === 0 || sitesData.length === 1 ) {
 				window.location.reload();
 			}
 

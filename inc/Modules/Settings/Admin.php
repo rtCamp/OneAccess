@@ -100,7 +100,7 @@ class Admin implements Registrable {
 	 * Add the Manage Users submenu page for governing sites.
 	 */
 	public function manage_users(): void {
-		if ( ! Settings::is_governing_site() ) {
+		if ( ! Settings::is_governing_site() || empty( Settings::get_shared_sites() ) ) {
 			return;
 		}
 
@@ -138,7 +138,7 @@ class Admin implements Registrable {
 	 * Remove the default submenu added by WordPress.
 	 */
 	public function remove_default_submenu(): void {
-		if ( Settings::is_governing_site() ) {
+		if ( Settings::is_governing_site() && ! empty( Settings::get_shared_sites() ) ) {
 			return;
 		}
 		remove_submenu_page( self::MENU_SLUG, self::MENU_SLUG );
