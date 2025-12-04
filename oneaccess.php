@@ -80,6 +80,9 @@ register_activation_hook(
 			return;
 		}
 
+		\OneAccess\Modules\Core\User_Roles::create_brand_admin_role();
+		\OneAccess\Modules\Core\User_Roles::create_network_admin_role();
+
 		// Update user role on activation.
 		\OneAccess\Modules\Core\User_Roles::update_user_role_on_activation();
 

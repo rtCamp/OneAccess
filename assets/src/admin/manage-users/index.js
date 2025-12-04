@@ -77,7 +77,7 @@ const TabPanel = () => {
 				throw new Error( 'Failed to fetch available sites' );
 			}
 			const data = await response.json();
-			setAvailableSites( data.shared_sites || [] );
+			setAvailableSites( data.sites_data || [] );
 		} catch ( error ) {
 			setNotice( {
 				type: 'error',

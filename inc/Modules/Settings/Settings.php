@@ -361,7 +361,26 @@ final class Settings implements Registrable {
 	 * @param string $url The parent site URL.
 	 */
 	public static function set_parent_site_url( string $url ): bool {
-		return update_option( self::OPTION_CONSUMER_PARENT_SITE_URL, untrailingslashit( esc_url_raw( $url ) ), false );
+
+		$is_updated = update_option( self::OPTION_CONSUMER_PARENT_SITE_URL, untrailingslashit( esc_url_raw( $url ) ), false );
+
+		if ( $is_updated ) {
+			/**
+			 * Action triggered when governing site is configured for the brand site.
+			 *
+			 * @hook oneaccess_governing_site_configured
+			 */
+			if ( function_exists( 'as_schedule_single_action' ) ) {
+				as_schedule_single_action(
+					time() + MINUTE_IN_SECONDS,
+					'oneaccess_governing_site_configured',
+					[],
+					'oneaccess'
+				);
+			}
+		}
+
+		return $is_updated;
 	}
 
 	/**

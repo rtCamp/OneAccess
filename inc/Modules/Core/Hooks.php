@@ -93,6 +93,8 @@ class Hooks implements Registrable {
 			switch ( $status ) {
 				case 'rejected':
 					return '<span class="oneaccess-pill oneaccess-pill--rejected">' . __( 'Rejected', 'oneaccess' ) . '</span>';
+				case 'approved':
+					return '<span class="oneaccess-pill oneaccess-pill--no-request">' . __( 'No Request', 'oneaccess' ) . '</span>';
 				default:
 					return '<span class="oneaccess-pill oneaccess-pill--pending">' . __( 'Pending', 'oneaccess' ) . '</span>';
 			}

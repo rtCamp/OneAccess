@@ -7,6 +7,7 @@
 
 namespace OneAccess\Modules\Rest;
 
+use OneAccess\Encryptor;
 use OneAccess\Modules\Core\DB;
 use OneAccess\Modules\Settings\Settings;
 use WP_REST_Request;
@@ -174,7 +175,7 @@ class Actions_Controller extends Abstract_REST_Controller {
 	 *
 	 * @return bool
 	 */
-	private static function brand_site_to_governing_site_permission_check( WP_REST_Request $request ): bool {
+	public static function brand_site_to_governing_site_permission_check( WP_REST_Request $request ): bool {
 		// check X-oneaccess-Token header.
 
 		$token = $request->get_header( 'X_ONEACCESS_TOKEN' );
@@ -338,7 +339,7 @@ class Actions_Controller extends Abstract_REST_Controller {
 	 * @param array  $users_batch Users to send.
 	 * @param string $governing_site_url Governing site URL.
 	 *
-	 * @return array|\OneAccess\Modules\Rest\WP_Error Response or error.
+	 * @return array|\WP_Error Response or error.
 	 */
 	private function send_users_batch( array $users_batch, string $governing_site_url ): array|\WP_Error {
 		return wp_safe_remote_post(
@@ -347,7 +348,7 @@ class Actions_Controller extends Abstract_REST_Controller {
 				'body'    => wp_json_encode( [ 'users' => $users_batch ] ),
 				'headers' => [
 					'Content-Type'      => 'application/json',
-					'X-OneAccess-Token' => get_option( Settings::OPTION_CONSUMER_API_KEY, '' ),
+					'X-OneAccess-Token' => Encryptor::decrypt( get_option( Settings::OPTION_CONSUMER_API_KEY, '' ) ),
 				],
 				'timeout' => 30, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout -- user creation on multiple sites take time.
 			]
