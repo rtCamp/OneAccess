@@ -15,8 +15,14 @@ use OneAccess\Modules\Settings\Settings;
  */
 class User_Roles implements Registrable {
 
-	private const PREFIX = 'oneaccess_';
-
+	/**
+	 * Prefix for custom roles.
+	 *
+	 * @todo need to replace globally with single source of truth.
+	 *
+	 * @var string
+	 */
+	private const PREFIX       = 'oneaccess_';
 	public const BRAND_ADMIN   = self::PREFIX . 'brand_admin';
 	public const NETWORK_ADMIN = self::PREFIX . 'network_admin';
 

@@ -20,7 +20,9 @@ class Admin implements Registrable {
 	/**
 	 * The menu slug for the admin menu.
 	 *
-	 * @todo replace with a cross-plugin menu.
+	 * @todo need to replace globally with single source of truth.
+	 *
+	 * @var string
 	 */
 	public const MENU_SLUG = 'oneaccess';
 

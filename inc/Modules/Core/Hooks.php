@@ -27,11 +27,12 @@ class Hooks implements Registrable {
 			return;
 		}
 
+		$actions_controller = new Actions_Controller();
 		// trigger oneaccess_governing_site_configured action to send uses data to governing site.
-		add_action( 'oneaccess_governing_site_configured', [ $this, 'send_users_in_batch' ] );
+		add_action( 'oneaccess_governing_site_configured', [ $actions_controller, 'send_users_for_deduplication' ] );
 
 		// when user is created then send it to governing site.
-		add_action( 'user_register', [ $this, 'send_registered_user_to_governing_site' ] );
+		add_action( 'user_register', [ $actions_controller, 'send_single_user_for_deduplication' ] );
 
 		// get current user.
 		$current_user = wp_get_current_user();
@@ -97,27 +98,5 @@ class Hooks implements Registrable {
 			}
 		}
 		return $value;
-	}
-
-	/**
-	 * Send users data in batch to governing site.
-	 *
-	 * @return void
-	 */
-	public function send_users_in_batch(): void {
-		$action_instance = new Actions_Controller();
-		$action_instance->send_users_for_deduplication();
-	}
-
-	/**
-	 * Send newly registered user to governing site.
-	 *
-	 * @param int $user_id User ID.
-	 *
-	 * @return void
-	 */
-	public function send_registered_user_to_governing_site( int $user_id ): void {
-		$action_instance = new Actions_Controller();
-		$action_instance->send_single_user_for_deduplication( $user_id );
 	}
 }

@@ -17,6 +17,8 @@ class DB implements Registrable {
 	/**
 	 * Global prefix.
 	 *
+	 * @todo need to replace with constant from main plugin file.
+	 *
 	 * @var string
 	 */
 	private const ONEACCESS = 'oneaccess_';
@@ -46,19 +48,8 @@ class DB implements Registrable {
 	 * {@inheritDoc}
 	 */
 	public function register_hooks(): void {
-		// @todo if required add hooks here.
 		// oneaccess_add_deduplicated_users to add users to deduplicated users table.
-		add_action( 'oneaccess_add_deduplicated_users', [ $this, 'handle_deduplicated_users' ], 10, 1 );
-	}
-
-	/**
-	 * Handle adding deduplicated user to the database.
-	 *
-	 * @param array $users_data Users data to be added.
-	 * @return void
-	 */
-	public function handle_deduplicated_users( array $users_data ): void {
-		self::add_deduplicated_users( $users_data );
+		add_action( 'oneaccess_add_deduplicated_users', [ $this, 'add_deduplicated_users' ], 10, 1 );
 	}
 
 	/**

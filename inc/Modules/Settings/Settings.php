@@ -18,6 +18,10 @@ use OneAccess\Encryptor;
 final class Settings implements Registrable {
 	/**
 	 * The setting prefix.
+	 *
+	 * @todo need to replace globally with single source of truth.
+	 *
+	 * @var string
 	 */
 	private const SETTING_PREFIX = 'oneaccess_';
 
