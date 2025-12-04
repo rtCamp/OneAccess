@@ -73,16 +73,17 @@ const OnboardingScreen = () => {
 		setIsSaving( true );
 
 		try {
-			await apiFetch<{ oneaccess_site_type?: SiteType }>( {
-				path: '/wp/v2/settings',
+			// need to use custom endpoint as after site type change we need to update user role & create brand admin or network admin accordingly.
+			await apiFetch<{ site_type?: SiteType }>( {
+				path: '/oneaccess/v1/site-type',
 				method: 'POST',
-				data: { oneaccess_site_type: value },
+				data: { site_type: value },
 			} ).then( ( settings ) => {
-				if ( ! settings?.oneaccess_site_type ) {
+				if ( ! settings?.site_type ) {
 					throw new Error( __( 'No site type in response', 'oneaccess' ) );
 				}
 
-				setSiteType( settings.oneaccess_site_type );
+				setSiteType( settings.site_type );
 
 				// Redirect user to setup page.
 				if ( setup_url ) {

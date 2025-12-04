@@ -37,7 +37,7 @@ class Hooks implements Registrable {
 		$current_user = wp_get_current_user();
 
 		// check if its brand admin else return.
-		if ( ! in_array( 'brand_admin', $current_user->roles, true ) ) {
+		if ( ! in_array( User_Roles::BRAND_ADMIN, $current_user->roles, true ) ) {
 			return;
 		}
 

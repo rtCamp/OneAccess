@@ -94,6 +94,9 @@ function delete_plugin_data(): void {
 			'oneaccess_profile_update_requests',
 			'oneaccess_new_users',
 			'oneaccess_governing_site_url',
+			'oneaccess_db_version',
+			'oneaccess_consumer_api_key',
+			'oneaccess_parent_site_url',
 		];
 
 		foreach ( $options as $option ) {

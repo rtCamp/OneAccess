@@ -10,7 +10,9 @@ namespace OneAccess\Modules\Settings;
 
 use OneAccess\Contracts\Interfaces\Registrable;
 use OneAccess\Modules\Core\Assets;
+use OneAccess\Modules\Core\DB;
 use OneAccess\Modules\Core\User_Roles;
+
 /**
  * Class Settings
  */
@@ -39,16 +41,23 @@ class Admin implements Registrable {
 	 * {@inheritDoc}
 	 */
 	public function register_hooks(): void {
-		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
-		add_action( 'admin_menu', [ $this, 'manage_users' ], 15 );
-		add_action( 'admin_menu', [ $this, 'add_submenu' ], 20 ); // 20 priority to make sure settings page respect its position.
-		add_action( 'admin_menu', [ $this, 'remove_default_submenu' ], 999 );
 
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20, 1 );
 		add_action( 'admin_footer', [ $this, 'inject_site_selection_modal' ] );
 
 		add_filter( 'plugin_action_links_' . ONEACCESS_PLUGIN_BASENAME, [ $this, 'add_action_links' ], 2 );
 		add_filter( 'admin_body_class', [ $this, 'add_body_classes' ] );
+
+		// check if current user is network admin or brand admin to show menu.
+		$current_user = wp_get_current_user();
+		if ( ! current_user_can( 'manage_options' ) || ( ! in_array( User_Roles::NETWORK_ADMIN, $current_user->roles, true ) && ! in_array( User_Roles::BRAND_ADMIN, $current_user->roles, true ) ) ) {
+			return;
+		}
+
+		add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+		add_action( 'admin_menu', [ $this, 'manage_users' ], 15 );
+		add_action( 'admin_menu', [ $this, 'add_submenu' ], 20 ); // 20 priority to make sure settings page respect its position.
+		add_action( 'admin_menu', [ $this, 'remove_default_submenu' ], 999 );
 	}
 
 	/**
@@ -168,6 +177,14 @@ class Admin implements Registrable {
 
 		if ( strpos( $hook, 'toplevel_page_oneaccess' ) !== false ) {
 			$this->enqueue_manage_users_scripts();
+		}
+
+		if ( Settings::is_consumer_site() && strpos( $hook, 'users.php' ) !== false ) {
+			wp_enqueue_style( Assets::ADMIN_USER_STYLES_HANDLE );
+		}
+
+		if ( Settings::is_consumer_site() && ( ( strpos( $hook, 'profile.php' ) !== false ) || ( strpos( $hook, 'user-edit.php' ) !== false ) ) ) {
+			$this->enqueue_admin_user_scripts();
 		}
 
 		// @todo Move other scripts from Assets to here.
@@ -304,6 +321,31 @@ class Admin implements Registrable {
 
 		wp_enqueue_script( Assets::MANAGE_USERS_SCRIPT_HANDLE );
 		wp_enqueue_style( Assets::MANAGE_USERS_SCRIPT_HANDLE );
+	}
+
+	/**
+	 * Enqueue scripts and styles for the admin user profile pages.
+	 */
+	private function enqueue_admin_user_scripts(): void {
+		wp_enqueue_style( Assets::ADMIN_USER_STYLES_HANDLE );
+
+		$current_user                  = isset( $_GET['user_id'] ) ? filter_input( INPUT_GET, 'user_id', FILTER_SANITIZE_NUMBER_INT ) : get_current_user_id(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this is to know on which user profile page we are.      
+		$get_user_profile_request_data = DB::get_latest_profile_request_by_user_id( $current_user );
+		$current_user_request          = is_array( $get_user_profile_request_data ) && ! empty( $get_user_profile_request_data ) ? $get_user_profile_request_data : null;
+
+		wp_localize_script(
+			Assets::USER_PROFILE_SCRIPT_HANDLE,
+			'OneAccessProfile',
+			array_merge(
+				Assets::get_localized_data(),
+				[
+					'userId'  => $current_user,
+					'request' => $current_user_request,
+				]
+			)
+		);
+
+		wp_enqueue_script( Assets::USER_PROFILE_SCRIPT_HANDLE );
 	}
 
 	/**

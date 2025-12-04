@@ -17,13 +17,6 @@ use OneAccess\Modules\Settings\Settings;
 class Profile_Request implements Registrable {
 
 	/**
-	 * Rejection comment.
-	 *
-	 * @var string
-	 */
-	private static $rejection_comment;
-
-	/**
 	 * {@inheritDoc}
 	 */
 	public function register_hooks(): void {

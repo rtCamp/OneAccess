@@ -117,17 +117,17 @@ class DB implements Registrable {
 		$charset_collate = $wpdb->get_charset_collate();
 
 		$sql = "CREATE TABLE IF NOT EXISTS $table_name (
-		id BIGINT(20) U	NSIGNED NOT NULL AUTO_INCREMENT,
-		user_id BIGINT(20) UNSIGNED NOT NULL,
-		request_data JSON NOT NULL,
-		status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
-		comment TEXT NULL,
-		created_at DATETIME NOT NULL,
-		updated_a	t DATETIME NOT NULL,
-		PRIMARY KEY (id),
-		KEY user_id (user_id),
-		KEY status (status)
-		) $charset_collate;";
+        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id BIGINT(20) UNSIGNED NOT NULL,
+        request_data JSON NOT NULL,
+        status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+        comment TEXT NULL,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL,
+        PRIMARY KEY (id),
+        KEY user_id (user_id),
+        KEY status (status)
+    ) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );

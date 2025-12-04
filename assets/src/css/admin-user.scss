@@ -75,7 +75,8 @@
 
     &:has(p strong),
     &:has( a[href*="users.php"] ), 
-    &:has( a[href*="user-edit.php"] ) {
+    &:has( a[href*="user-edit.php"] ),
+    &:has( a[href*="profile.php"] ) {
         display: none !important;
     }
 }

@@ -37,7 +37,9 @@ class User_Roles implements Registrable {
 	 */
 	public function modify_user_caps( $allcaps ): array {
 		// if this is branch site.
-		if ( Settings::is_consumer_site() ) {
+		if ( ! Settings::is_consumer_site() ) {
+			return $allcaps;
+		}
 			// remove user creation, deletion and promotion caps.
 			$caps_to_remove = [
 				'create_users',
@@ -58,9 +60,8 @@ class User_Roles implements Registrable {
 			if ( ! in_array( self::BRAND_ADMIN, $current_user->roles, true ) ) {
 				$allcaps['edit_users'] = false;
 			}
-		}
 
-		return $allcaps;
+			return $allcaps;
 	}
 
 	/**

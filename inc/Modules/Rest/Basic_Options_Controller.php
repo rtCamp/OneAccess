@@ -7,6 +7,7 @@
 
 namespace OneAccess\Modules\Rest;
 
+use OneAccess\Modules\Core\User_Roles;
 use OneAccess\Modules\Settings\Settings;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -157,6 +158,38 @@ class Basic_Options_Controller extends Abstract_REST_Controller {
 
 		$site_type = sanitize_text_field( $request->get_param( 'site_type' ) );
 		$success   = update_option( Settings::OPTION_SITE_TYPE, $site_type, false );
+
+		// Create user roles based on site type.
+		User_Roles::create_brand_admin_role();
+		User_Roles::create_network_admin_role();
+
+		// Get current user once.
+		$current_user = wp_get_current_user();
+		$user_roles   = (array) $current_user->roles;
+
+		// If it's a brand site, add brand admin role.
+		if ( Settings::is_consumer_site() ) {
+			if ( ! in_array( User_Roles::BRAND_ADMIN, $user_roles, true ) ) {
+				$current_user->add_role( User_Roles::BRAND_ADMIN );
+			}
+
+			// Remove network admin role if exists.
+			if ( in_array( User_Roles::NETWORK_ADMIN, $user_roles, true ) ) {
+				$current_user->remove_role( User_Roles::NETWORK_ADMIN );
+			}
+		}
+
+		// If it's a governing site, add network admin role.
+		if ( Settings::is_governing_site() ) {
+			if ( ! in_array( User_Roles::NETWORK_ADMIN, $user_roles, true ) ) {
+				$current_user->add_role( User_Roles::NETWORK_ADMIN );
+			}
+
+			// Remove brand admin role if exists.
+			if ( in_array( User_Roles::BRAND_ADMIN, $user_roles, true ) ) {
+				$current_user->remove_role( User_Roles::BRAND_ADMIN );
+			}
+		}
 
 		return rest_ensure_response(
 			[
