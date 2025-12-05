@@ -226,4 +226,13 @@
 		</properties>
 	</rule>
 
+	<!-- Register custom capabilities -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="oneaccess_manage_settings"/>
+			</property>
+		</properties>
+	</rule>
+
 </ruleset>
