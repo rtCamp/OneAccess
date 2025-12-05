@@ -4,11 +4,11 @@
 .toplevel_page_oneaccess {
 
 	.tab-panel {
-	
+
 		.tab-nav__wrapper {
-	
+
 			.tab-nav {
-	
+
 				&__button {
 					box-shadow: none;
 					font-weight: 500;
@@ -29,12 +29,12 @@
 					margin: 0;
 					padding: 6px 12px;
 					text-decoration: none;
-	
+
 					&::after {
 						background: var(
-							--wp-components-color-accent,
-							var(--wp-admin-theme-color, #3858e9)
-						);
+								--wp-components-color-accent,
+								var(--wp-admin-theme-color, #3858e9)
+							);
 						border-radius: 0;
 						bottom: 0;
 						content: "";
@@ -44,11 +44,11 @@
 						position: absolute;
 						right: 0;
 					}
-	
+
 				}
-	
+
 				&__button--active {
-	
+
 					&::after {
 						height: 1.5px;
 						outline: 2px solid #0000;

@@ -38,6 +38,7 @@ final class Main {
 		Modules\Rest\Brand_Site_Controller::class,
 		Modules\Rest\Governing_Site_Controller::class,
 
+		Modules\User\Admin::class,
 		Modules\User\Notice::class,
 		Modules\User\Profile_Request::class,
 	];

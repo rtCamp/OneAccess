@@ -9,6 +9,7 @@ namespace OneAccess\Modules\User;
 
 use OneAccess\Contracts\Interfaces\Registrable;
 use OneAccess\Modules\Core\DB;
+use OneAccess\Modules\Core\User_Roles;
 use OneAccess\Modules\Settings\Settings;
 
 /**
@@ -28,6 +29,20 @@ class Profile_Request implements Registrable {
 		// store personal profile update and edit user profile request.
 		add_action( 'personal_options_update', [ $this, 'store_profile_update_request' ] );
 		add_action( 'edit_user_profile_update', [ $this, 'store_profile_update_request' ] );
+
+		// get current user.
+		$current_user = wp_get_current_user();
+
+		// check if its brand admin else return.
+		if ( ! in_array( User_Roles::BRAND_ADMIN, $current_user->roles, true ) ) {
+			return;
+		}
+
+		// add custom user column to indicate profile request status.
+		add_filter( 'manage_users_columns', [ $this, 'add_profile_request_status_column' ] );
+
+		// add custom user column content.
+		add_filter( 'manage_users_custom_column', [ $this, 'render_profile_request_status_column' ], 10, 3 );
 	}
 
 	/**
@@ -215,5 +230,48 @@ class Profile_Request implements Registrable {
 				break;
 		}
 		return $sanitized_value;
+	}
+
+	/**
+	 * Add custom user column to indicate profile request status.
+	 *
+	 * @param array $columns Existing user columns.
+	 *
+	 * @return array Modified user columns.
+	 */
+	public function add_profile_request_status_column( $columns ): array {
+		// Add a new column for profile request status.
+		$columns['profile_request_status'] = __( 'Profile Request Status', 'oneaccess' );
+		return $columns;
+	}
+
+	/**
+	 * Render the content for the profile request status column.
+	 *
+	 * @param string $value The current value of the column.
+	 * @param string $column_name The name of the column.
+	 * @param int    $user_id The ID of the user.
+	 *
+	 * @return string HTML content for the column.
+	 */
+	public function render_profile_request_status_column( $value, $column_name, $user_id ): string {
+		if ( 'profile_request_status' === $column_name ) {
+			// Get the user's profile request status.
+			$profile_update_requests = DB::get_latest_profile_request_by_user_id( $user_id );
+			if ( empty( $profile_update_requests ) ) {
+				return '<span class="oneaccess-pill oneaccess-pill--no-request">' . __( 'No Request', 'oneaccess' ) . '</span>';
+			}
+
+			$status = $profile_update_requests['status'] ?? 'pending';
+			switch ( $status ) {
+				case 'rejected':
+					return '<span class="oneaccess-pill oneaccess-pill--rejected">' . __( 'Rejected', 'oneaccess' ) . '</span>';
+				case 'approved':
+					return '<span class="oneaccess-pill oneaccess-pill--no-request">' . __( 'No Request', 'oneaccess' ) . '</span>';
+				default:
+					return '<span class="oneaccess-pill oneaccess-pill--pending">' . __( 'Pending', 'oneaccess' ) . '</span>';
+			}
+		}
+		return $value;
 	}
 }

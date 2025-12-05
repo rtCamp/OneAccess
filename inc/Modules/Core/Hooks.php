@@ -20,9 +20,8 @@ class Hooks implements Registrable {
 	 * {@inheritDoc}
 	 */
 	public function register_hooks(): void {
-		// oneaccess_add_deduplicated_users to add users to deduplicated users table.
-		add_action( 'oneaccess_add_deduplicated_users', [ $this, 'handle_deduplicated_users' ], 10, 1 );
 
+		// early return if this is not a brand site.
 		if ( ! Settings::is_consumer_site() ) {
 			return;
 		}
@@ -33,72 +32,5 @@ class Hooks implements Registrable {
 
 		// when user is created then send it to governing site.
 		add_action( 'user_register', [ $actions_controller, 'send_single_user_for_deduplication' ] );
-
-		// get current user.
-		$current_user = wp_get_current_user();
-
-		// check if its brand admin else return.
-		if ( ! in_array( User_Roles::BRAND_ADMIN, $current_user->roles, true ) ) {
-			return;
-		}
-
-		// add custom user column to indicate profile request status.
-		add_filter( 'manage_users_columns', [ $this, 'add_profile_request_status_column' ] );
-
-		// add custom user column content.
-		add_filter( 'manage_users_custom_column', [ $this, 'render_profile_request_status_column' ], 10, 3 );
-	}
-
-	/**
-	 * Handle adding deduplicated user to the database.
-	 *
-	 * @param array $users_data Users data to be added.
-	 * @return void
-	 */
-	public function handle_deduplicated_users( array $users_data ): void {
-		DB::add_deduplicated_users( $users_data );
-	}
-
-	/**
-	 * Add custom user column to indicate profile request status.
-	 *
-	 * @param array $columns Existing user columns.
-	 *
-	 * @return array Modified user columns.
-	 */
-	public function add_profile_request_status_column( $columns ): array {
-		// Add a new column for profile request status.
-		$columns['profile_request_status'] = __( 'Profile Request Status', 'oneaccess' );
-		return $columns;
-	}
-
-	/**
-	 * Render the content for the profile request status column.
-	 *
-	 * @param string $value The current value of the column.
-	 * @param string $column_name The name of the column.
-	 * @param int    $user_id The ID of the user.
-	 *
-	 * @return string HTML content for the column.
-	 */
-	public function render_profile_request_status_column( $value, $column_name, $user_id ): string {
-		if ( 'profile_request_status' === $column_name ) {
-			// Get the user's profile request status.
-			$profile_update_requests = DB::get_latest_profile_request_by_user_id( $user_id );
-			if ( empty( $profile_update_requests ) ) {
-				return '<span class="oneaccess-pill oneaccess-pill--no-request">' . __( 'No Request', 'oneaccess' ) . '</span>';
-			}
-
-			$status = $profile_update_requests['status'] ?? 'pending';
-			switch ( $status ) {
-				case 'rejected':
-					return '<span class="oneaccess-pill oneaccess-pill--rejected">' . __( 'Rejected', 'oneaccess' ) . '</span>';
-				case 'approved':
-					return '<span class="oneaccess-pill oneaccess-pill--no-request">' . __( 'No Request', 'oneaccess' ) . '</span>';
-				default:
-					return '<span class="oneaccess-pill oneaccess-pill--pending">' . __( 'Pending', 'oneaccess' ) . '</span>';
-			}
-		}
-		return $value;
 	}
 }

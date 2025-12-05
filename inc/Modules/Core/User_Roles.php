@@ -84,13 +84,13 @@ class User_Roles implements Registrable {
 			return;
 		}
 
-		$network_admin_role = add_role( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- all sites are not VIP sites.
+		$network_admin = add_role( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- all sites are not VIP sites.
 			self::NETWORK_ADMIN,
 			__( 'Network Admin', 'oneaccess' ),
 			$admin_role->capabilities
 		);
 
-		if ( ! $network_admin_role ) {
+		if ( ! $network_admin ) {
 			return;
 		}
 
@@ -99,10 +99,11 @@ class User_Roles implements Registrable {
 			'oneaccess_manage_users',
 			'oneaccess_manage_requests',
 			'oneaccess_manage_sites',
+			'oneaccess_manage_settings',
 		];
 
 		foreach ( $additional_caps as $cap ) {
-			$network_admin_role->add_cap( $cap );
+			$network_admin->add_cap( $cap );
 		}
 	}
 
@@ -120,11 +121,23 @@ class User_Roles implements Registrable {
 			return;
 		}
 
-		add_role( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- all sites are not VIP sites.
+		$brand_admin = add_role( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- all sites are not VIP sites.
 			self::BRAND_ADMIN,
 			__( 'Brand Admin', 'oneaccess' ),
 			$admin_role->capabilities
 		);
+
+		if ( ! $brand_admin ) {
+			return;
+		}
+
+		$additional_caps = [
+			'oneaccess_manage_settings',
+		];
+
+		foreach ( $additional_caps as $cap ) {
+			$brand_admin->add_cap( $cap );
+		}
 	}
 
 	/**

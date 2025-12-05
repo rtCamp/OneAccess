@@ -77,11 +77,6 @@ function delete_plugin_data(): void {
 		// Clear scheduled actions.
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
 			foreach ( $actions_to_clear as $action ) {
-				// check if action is scheduled then clear it.
-				if ( ! as_next_scheduled_action( $action ) ) {
-					continue;
-				}
-
 				as_unschedule_all_actions( $action );
 			}
 		}
@@ -89,14 +84,14 @@ function delete_plugin_data(): void {
 		// Options to clean up.
 		$options = [
 			'oneaccess_child_site_api_key',
+			'oneaccess_consumer_api_key',
+			'oneaccess_db_version',
+			'oneaccess_governing_site_url',
+			'oneaccess_new_users',
+			'oneaccess_parent_site_url',
+			'oneaccess_profile_update_requests',
 			'oneaccess_shared_sites',
 			'oneaccess_site_type',
-			'oneaccess_profile_update_requests',
-			'oneaccess_new_users',
-			'oneaccess_governing_site_url',
-			'oneaccess_db_version',
-			'oneaccess_consumer_api_key',
-			'oneaccess_parent_site_url',
 		];
 
 		foreach ( $options as $option ) {

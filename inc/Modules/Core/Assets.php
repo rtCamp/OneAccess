@@ -129,6 +129,7 @@ class Assets implements Registrable {
 	public function defer_scripts( string $tag, string $handle ): string {
 		$defer_handles = [
 			self::SETTINGS_SCRIPT_HANDLE,
+			self::USER_PROFILE_SCRIPT_HANDLE,
 		];
 
 		// Bail if we don't need to defer.
