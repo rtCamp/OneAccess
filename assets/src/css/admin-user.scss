@@ -1,81 +1,87 @@
 .profile_request_status {
 
-    .oneaccess-pill {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-align: center;
-    }
-    
-    .oneaccess-pill--no-request{
-        background-color: #f1f1f1;
+	.oneaccess-pill {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.25rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-align: center;
+	}
+
+	.oneaccess-pill--no-request{
+		background-color: #f1f1f1;
 		color: #666;
-    }
+	}
 
-    .oneaccess-pill--rejected {
-        background-color: #dc3545;
+	.oneaccess-pill--rejected {
+		background-color: #dc3545;
 		color: #fff;
-    }
+	}
 
-    .oneaccess-pill--pending {
-        background-color: #ffc107;
+	.oneaccess-pill--approved {
+		background-color: #28a745;
+		color: #fff;
+	}
+
+	.oneaccess-pill--pending {
+		background-color: #ffc107;
 		color: #000;
-    }
+	}
 }
 
 .oneaccess-rejection-notice {
-    background-color: #fef2f2;
-    border-radius: 0.25rem;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	background-color: #fef2f2;
+	border-radius: 0.25rem;
+	padding: 1rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    .notice-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.75rem;
+	.notice-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
 
-        .dashicons-warning {
-            color: #dc2626;
-            font-size: 1.25rem;
-            flex-shrink: 0;
-        }
+		.dashicons-warning {
+			color: #dc2626;
+			font-size: 1.25rem;
+			flex-shrink: 0;
+		}
 
-        .notice-message {
-            margin: 0;
-            font-size: 1rem;
-            color: #7f1d1d;
-            line-height: 1.5;
-        }
-    }
+		.notice-message {
+			margin: 0;
+			font-size: 1rem;
+			color: #7f1d1d;
+			line-height: 1.5;
+		}
+	}
 
-    .rejection-comment {
-        background-color: #fee2e2;
-        padding: 0.75rem 1rem;
-        border-radius: 0.25rem;
+	.rejection-comment {
+		background-color: #fee2e2;
+		padding: 0.75rem 1rem;
+		border-radius: 0.25rem;
 
-        p {
-            margin: 0;
-            font-size: 1rem;
-            color: #7f1d1d;
-            line-height: 1.6;
+		p {
+			margin: 0;
+			font-size: 1rem;
+			color: #7f1d1d;
+			line-height: 1.6;
 
-            strong {
-                color: #991b1b;
-                font-weight: 600;
-            }
-        }
-    }
+			strong {
+				color: #991b1b;
+				font-weight: 600;
+			}
+		}
+	}
 }
 
 .oneaccess-warning-notice +
 .notice.updated[id="message"] {
 
-    &:has(p strong),
-    &:has( a[href*="users.php"] ), 
-    &:has( a[href*="user-edit.php"] ) {
-        display: none !important;
-    }
+	&:has(p strong),
+	&:has( a[href*="users.php"] ),
+	&:has( a[href*="user-edit.php"] ),
+	&:has( a[href*="profile.php"] ) {
+		display: none !important;
+	}
 }

@@ -18,9 +18,9 @@ import { isValidUrl } from '../js/utils';
 
 const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, originalData = {} } ) => {
 	const [ errors, setErrors ] = useState( {
-		siteName: '',
-		siteUrl: '',
-		apiKey: '',
+		name: '',
+		url: '',
+		api_key: '',
 		message: '',
 	} );
 	const [ showNotice, setShowNotice ] = useState( false );
@@ -33,31 +33,31 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 		} // Always allow submission for new sites
 
 		return (
-			formData.siteName !== originalData.siteName ||
-			formData.siteUrl !== originalData.siteUrl ||
-			formData.apiKey !== originalData.apiKey
+			formData.name !== originalData.name ||
+			formData.url !== originalData.url ||
+			formData.api_key !== originalData.api_key
 		);
 	}, [ editing, formData, originalData ] );
 
 	const handleSubmit = async () => {
 		// Validate inputs
 		let siteUrlError = '';
-		if ( ! formData.siteUrl.trim() ) {
+		if ( ! formData.url.trim() ) {
 			siteUrlError = __( 'Site URL is required.', 'oneaccess' );
-		} else if ( ! isValidUrl( formData.siteUrl ) ) {
+		} else if ( ! isValidUrl( formData.url ) ) {
 			siteUrlError = __( 'Enter a valid URL (must start with http or https).', 'oneaccess' );
 		}
 
 		const newErrors = {
-			siteName: ! formData.siteName.trim() ? __( 'Site Name is required.', 'oneaccess' ) : '',
-			siteUrl: siteUrlError,
-			apiKey: ! formData.apiKey.trim() ? __( 'API Key is required.', 'oneaccess' ) : '',
+			name: ! formData.name.trim() ? __( 'Site Name is required.', 'oneaccess' ) : '',
+			url: siteUrlError,
+			api_key: ! formData.api_key.trim() ? __( 'API Key is required.', 'oneaccess' ) : '',
 			message: '',
 		};
 
 		// make sure site name is under 20 characters
-		if ( formData.siteName.length > 20 ) {
-			newErrors.siteName = __( 'Site Name must be under 20 characters.', 'oneaccess' );
+		if ( formData.name.length > 20 ) {
+			newErrors.name = __( 'Site Name must be under 20 characters.', 'oneaccess' );
 		}
 
 		setErrors( newErrors );
@@ -75,12 +75,12 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 		try {
 			// Perform health-check
 			const healthCheck = await fetch(
-				`${ formData.siteUrl }/wp-json/oneaccess/v1/health-check`,
+				`${ formData.url }/wp-json/oneaccess/v1/health-check`,
 				{
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-OneAccess-Token': formData.apiKey,
+						'X-OneAccess-Token': formData.api_key,
 					},
 				},
 			);
@@ -122,9 +122,9 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 			setShowNotice( true );
 			setIsProcessing( false );
 			return;
+		} finally {
+			setIsProcessing( false );
 		}
-
-		setIsProcessing( false );
 	};
 
 	// Button should be disabled if:
@@ -132,9 +132,9 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 	// 2. Required fields are empty, OR
 	// 3. In editing mode and no changes have been made
 	const isButtonDisabled = isProcessing ||
-		! formData.siteName ||
-		! formData.siteUrl ||
-		! formData.apiKey ||
+		! formData.name ||
+		! formData.url ||
+		! formData.api_key ||
 		( editing && ! hasChanges );
 
 	return (
@@ -150,33 +150,33 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 					isDismissible={ true }
 					onRemove={ () => setShowNotice( false ) }
 				>
-					{ errors.message || errors.siteName || errors.siteUrl || errors.apiKey }
+					{ errors.message || errors.name || errors.url || errors.api_key }
 				</Notice>
 			) }
 
 			<TextControl
 				label={ __( 'Site Name*', 'oneaccess' ) }
-				value={ formData.siteName }
-				onChange={ ( value ) => setFormData( { ...formData, siteName: value } ) }
-				error={ errors.siteName }
+				value={ formData.name }
+				onChange={ ( value ) => setFormData( { ...formData, name: value } ) }
+				error={ errors.name }
 				help={ __( 'This is the name of the site that will be registered.', 'oneaccess' ) }
 				__next40pxDefaultSize
 				__nextHasNoMarginBottom
 			/>
 			<TextControl
 				label={ __( 'Site URL*', 'oneaccess' ) }
-				value={ formData.siteUrl }
-				onChange={ ( value ) => setFormData( { ...formData, siteUrl: value } ) }
-				error={ errors.siteUrl }
+				value={ formData.url }
+				onChange={ ( value ) => setFormData( { ...formData, url: value } ) }
+				error={ errors.url }
 				help={ __( 'It must start with http or https and end with /, like: https://rtcamp.com/', 'oneaccess' ) }
 				__next40pxDefaultSize
 				__nextHasNoMarginBottom
 			/>
 			<TextareaControl
 				label={ __( 'API Key*', 'oneaccess' ) }
-				value={ formData.apiKey }
-				onChange={ ( value ) => setFormData( { ...formData, apiKey: value } ) }
-				error={ errors.apiKey }
+				value={ formData.api_key }
+				onChange={ ( value ) => setFormData( { ...formData, api_key: value } ) }
+				error={ errors.api_key }
 				help={ __( 'This is the api key that will be used to authenticate the site for OneAccess.', 'oneaccess' ) }
 				__nextHasNoMarginBottom
 			/>

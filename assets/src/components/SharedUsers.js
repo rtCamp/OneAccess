@@ -135,8 +135,8 @@ const SharedUsers = ( { availableSites } ) => {
 				sites: user.sites_info?.map( ( site ) => ( {
 					site_url: site.site_url,
 					site_name: site.site_name,
-					siteName: site.site_name,
-					siteUrl: site.site_url,
+					name: site.site_name,
+					url: site.site_url,
 					// Get the first role from roles array, or handle object structure
 					role: ( () => {
 						if ( Array.isArray( site.roles ) ) {
@@ -183,8 +183,8 @@ const SharedUsers = ( { availableSites } ) => {
 
 	// Get sites available for adding (sites user is not already assigned to)
 	const getAvailableSitesForUser = ( user ) => {
-		const userSiteUrls = user.sites?.map( ( site ) => site.siteUrl || site.site_url ) || [];
-		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.siteUrl ) );
+		const userSiteUrls = user.sites?.map( ( site ) => site.url || site.site_url ) || [];
+		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.url ) );
 	};
 
 	// Handle opening manage roles modal
@@ -343,10 +343,10 @@ const SharedUsers = ( { availableSites } ) => {
 				throw new Error( data.message || 'Failed to add user to sites' );
 			}
 
-			const siteNames = selectedSitesToAdd?.map( ( site ) => site.siteName ).join( ', ' );
+			const siteNames = selectedSitesToAdd?.map( ( site ) => site.name ).join( ', ' );
 			setNotice( {
 				type: 'success',
-				message: __( 'User added to sites successfully: ', 'oneaccess' ) + siteNames,
+				message: __( 'User added to sites successfully:', 'oneaccess' ) + siteNames,
 			} );
 
 			// Refresh users list
@@ -572,8 +572,8 @@ const SharedUsers = ( { availableSites } ) => {
 							options={ [
 								{ label: __( 'All Sites', 'oneaccess' ), value: '' },
 								...availableSites?.map( ( site ) => ( {
-									label: site.siteName,
-									value: site.siteUrl,
+									label: site.name,
+									value: site.url,
 								} ) ),
 							] }
 							onChange={ setSelectedSiteFilter }
@@ -764,7 +764,7 @@ const SharedUsers = ( { availableSites } ) => {
 					<VStack spacing="4">
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
-								{ __( 'Manage roles for user: ', 'oneaccess' ) }
+								{ __( 'Manage roles for user:', 'oneaccess' ) }
 								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
 							</p>
 						</div>
@@ -869,7 +869,7 @@ const SharedUsers = ( { availableSites } ) => {
 					<VStack spacing="4">
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
-								{ __( 'Add user to additional sites: ', 'oneaccess' ) }
+								{ __( 'Add user to additional sites:', 'oneaccess' ) }
 								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
 							</p>
 							<p style={ { margin: 0, color: '#1f1c1a', fontSize: '16px', fontWeight: 600 } } >
@@ -890,9 +890,9 @@ const SharedUsers = ( { availableSites } ) => {
 											} else {
 												setSelectedSitesToAdd(
 													availableSitesToAddUser?.map( ( site ) => ( {
-														siteUrl: site.siteUrl,
-														siteName: site.siteName,
-														apiKey: site.apiKey,
+														url: site.url,
+														name: site.name,
+														api_key: site.api_key,
 														role: site.role || 'subscriber',
 													} ) ),
 												);
@@ -921,8 +921,8 @@ const SharedUsers = ( { availableSites } ) => {
 								>
 									<VStack spacing="3">
 										{ getAvailableSitesForUser( selectedUser )?.map( ( site, index ) => {
-											const isSelected = selectedSitesToAdd?.some( ( s ) => s.siteUrl === site.siteUrl );
-											const selectedSite = selectedSitesToAdd?.find( ( s ) => s.siteUrl === site.siteUrl );
+											const isSelected = selectedSitesToAdd?.some( ( s ) => s.url === site.url );
+											const selectedSite = selectedSitesToAdd?.find( ( s ) => s.url === site.url );
 
 											return (
 												<div
@@ -937,10 +937,10 @@ const SharedUsers = ( { availableSites } ) => {
 														label={
 															<div>
 																<div style={ { fontWeight: '500', color: '#23282d' } }>
-																	{ site.siteName }
+																	{ site.name }
 																</div>
 																<div style={ { fontSize: '12px', color: '#6c757d' } }>
-																	{ site.siteUrl }
+																	{ site.url }
 																</div>
 															</div>
 														}
@@ -948,15 +948,15 @@ const SharedUsers = ( { availableSites } ) => {
 														onChange={ () => {
 															if ( isSelected ) {
 																setSelectedSitesToAdd( ( prev ) =>
-																	prev.filter( ( s ) => s.siteUrl !== site.siteUrl ),
+																	prev.filter( ( s ) => s.url !== site.url ),
 																);
 															} else {
 																setSelectedSitesToAdd( ( prev ) => [
 																	...prev,
 																	{
-																		siteUrl: site.siteUrl,
-																		siteName: site.siteName,
-																		apiKey: site.apiKey,
+																		url: site.url,
+																		name: site.name,
+																		api_key: site.api_key,
 																		role: 'subscriber',
 																	},
 																] );
@@ -977,7 +977,7 @@ const SharedUsers = ( { availableSites } ) => {
 																onChange={ ( value ) => {
 																	setSelectedSitesToAdd( ( prev ) =>
 																		prev?.map( ( s ) =>
-																			s.siteUrl === site.siteUrl
+																			s.url === site.url
 																				? { ...s, role: value }
 																				: s,
 																		),
@@ -1048,7 +1048,7 @@ const SharedUsers = ( { availableSites } ) => {
 					<VStack spacing="4">
 						<div>
 							<p style={ { margin: 0, color: '#6c757d', fontSize: '14px' } }>
-								{ __( 'Delete User from selected sites: ', 'oneaccess' ) }
+								{ __( 'Delete User from selected sites:', 'oneaccess' ) }
 								<strong>{ selectedUser.full_name || selectedUser.username }</strong> ({ selectedUser.email })
 							</p>
 						</div>

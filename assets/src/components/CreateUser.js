@@ -29,7 +29,7 @@ import { isValidEmail, checkPasswordStrength, strengthWidths, getStrengthColor }
 
 const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
-const API_KEY = OneAccess.apiKey;
+const API_KEY = OneAccess.api_key;
 const AVAILABLE_ROLES = OneAccess.availableRoles || [];
 
 const CreateUser = ( { availableSites } ) => {
@@ -371,9 +371,9 @@ const CreateUser = ( { availableSites } ) => {
 										} else {
 											setSelectedSites(
 												availableSites?.map( ( site ) => ( {
-													siteUrl: site.siteUrl,
-													siteName: site.siteName,
-													apiKey: site.apiKey,
+													url: site.url,
+													name: site.name,
+													api_key: site.api_key,
 												} ) ),
 											);
 										}
@@ -418,31 +418,31 @@ const CreateUser = ( { availableSites } ) => {
 													if ( e.key === 'Enter' || e.key === ' ' ) {
 														e.preventDefault();
 														setSelectedSites( ( prev ) =>
-															prev.some( ( s ) => s.siteUrl === site.siteUrl )
-																? prev.filter( ( s ) => s.siteUrl !== site.siteUrl )
+															prev.some( ( s ) => s.url === site.url )
+																? prev.filter( ( s ) => s.url !== site.url )
 																: [
 																	...prev,
 																	{
-																		siteUrl: site.siteUrl,
-																		siteName: site.siteName,
-																		apiKey: site.apiKey,
+																		url: site.url,
+																		name: site.name,
+																		api_key: site.api_key,
 																	},
 																],
 														);
 													}
 												} }
-												aria-pressed={ selectedSites.some( ( s ) => s.siteUrl === site.siteUrl ) }
+												aria-pressed={ selectedSites.some( ( s ) => s.url === site.url ) }
 												onClick={ ( event ) => {
 													event.stopPropagation();
 													setSelectedSites( ( prev ) =>
-														prev.some( ( s ) => s.siteUrl === site.siteUrl )
-															? prev.filter( ( s ) => s.siteUrl !== site.siteUrl )
+														prev.some( ( s ) => s.url === site.url )
+															? prev.filter( ( s ) => s.url !== site.url )
 															: [
 																...prev,
 																{
-																	siteUrl: site.siteUrl,
-																	siteName: site.siteName,
-																	apiKey: site.apiKey,
+																	url: site.url,
+																	name: site.name,
+																	api_key: site.api_key,
 																},
 															],
 													);
@@ -453,14 +453,14 @@ const CreateUser = ( { availableSites } ) => {
 													label={
 														<div>
 															<div style={ { fontWeight: '500', color: '#23282d' } }>
-																{ site.siteName }
+																{ site.name }
 															</div>
 															<div style={ { fontSize: '12px', color: '#6c757d' } }>
-																{ site.siteUrl }
+																{ site.url }
 															</div>
 														</div>
 													}
-													checked={ selectedSites.some( ( s ) => s.siteUrl === site.siteUrl ) }
+													checked={ selectedSites.some( ( s ) => s.url === site.url ) }
 													__nextHasNoMarginBottom
 												/>
 											</div>

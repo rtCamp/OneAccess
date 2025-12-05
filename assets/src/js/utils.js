@@ -68,7 +68,6 @@ const checkPasswordStrength = ( password ) => {
  * Mapping of password strength levels to their corresponding width percentages.
  *
  * @return {Object} An object mapping password strength levels to width percentages.
- *
  */
 const strengthWidths = {
 	'very-weak': '25%',
