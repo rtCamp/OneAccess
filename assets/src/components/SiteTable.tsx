@@ -4,12 +4,23 @@
 import { useState } from '@wordpress/element';
 import { Button, Card, CardHeader, CardBody, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import type { BrandSite, EditingIndex } from '@/admin/settings/page';
 
-const SiteTable = ( { sites, onEdit, onDelete, setFormData, setShowModal } ) => {
-	const [ showDeleteModal, setShowDeleteModal ] = useState( false );
-	const [ deleteIndex, setDeleteIndex ] = useState( null );
+interface SiteTableProps {
+	sites: BrandSite[];
+	onEdit: ( index: number ) => void;
+	onDelete: ( index: number|null ) => void;
+	setFormData: ( data: BrandSite ) => void;
+	setShowModal: ( show: boolean ) => void;
+}
 
-	const handleDeleteClick = ( index ) => {
+const SiteTable = (
+	{ sites, onEdit, onDelete, setFormData, setShowModal } : SiteTableProps,
+) => {
+	const [ showDeleteModal, setShowDeleteModal ] = useState< boolean >( false );
+	const [ deleteIndex, setDeleteIndex ] = useState< EditingIndex >( null );
+
+	const handleDeleteClick = ( index:number ) => {
 		setDeleteIndex( index );
 		setShowDeleteModal( true );
 	};
@@ -50,7 +61,7 @@ const SiteTable = ( { sites, onEdit, onDelete, setFormData, setShowModal } ) => 
 					<tbody>
 						{ sites.length === 0 && (
 							<tr>
-								<td colSpan="4" style={ { textAlign: 'center' } }>
+								<td colSpan={ 4 } style={ { textAlign: 'center' } }>
 									{ __( 'No Brand Sites found.', 'oneaccess' ) }
 								</td>
 							</tr>
@@ -95,7 +106,10 @@ const SiteTable = ( { sites, onEdit, onDelete, setFormData, setShowModal } ) => 
 	);
 };
 
-const DeleteConfirmationModal = ( { onConfirm, onCancel } ) => (
+const DeleteConfirmationModal = (
+	{ onConfirm, onCancel }
+	: { onConfirm: () => void; onCancel: () => void },
+) => (
 	<Modal
 		title={ __( 'Delete Brand Site', 'oneaccess' ) }
 		onRequestClose={ onCancel }

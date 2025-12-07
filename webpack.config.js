@@ -70,7 +70,7 @@ const scripts = {
 		main: path.resolve( process.cwd(), 'assets', 'src', 'js', 'main.js' ),
 		'user-profile': path.resolve( process.cwd(), 'assets', 'src', 'js', 'user-profile.js' ),
 		admin: path.resolve( process.cwd(), 'assets', 'src', 'js', 'admin.js' ),
-		settings: path.resolve( process.cwd(), 'assets', 'src', 'admin/settings', 'index.js' ),
+		settings: path.resolve( process.cwd(), 'assets', 'src', 'admin/settings', 'index.tsx' ),
 		onboarding: path.resolve( process.cwd(), 'assets', 'src', 'admin', 'onboarding', 'index.tsx' ),
 		'manage-users': path.resolve( process.cwd(), 'assets', 'src', 'admin/manage-users', 'index.js' ),
 	},

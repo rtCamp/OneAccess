@@ -47,6 +47,7 @@ function multisite_uninstall(): void {
  * The (site-specific) uninstall function.
  */
 function uninstall(): void {
+	remove_user_roles_caps();
 	delete_plugin_data();
 }
 
@@ -109,6 +110,41 @@ function delete_plugin_data(): void {
 			$full_table_name = $wpdb->prefix . $table;
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %s', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
 		}
+}
+
+/**
+ * Remove custom roles and capabilities from users.
+ */
+function remove_user_roles_caps(): void {
+	// remove custom roles and capabilities from users.
+	$roles = [ 'oneaccess_brand_admin', 'oneaccess_network_admin' ];
+
+	$capabilities = [
+		'oneaccess_manage_requests',
+		'oneaccess_manage_settings',
+		'oneaccess_manage_sites',
+		'oneaccess_manage_users',
+	];
+
+	// get all users with custom roles & remove the role and capabilities.
+	foreach ( $roles as $role ) {
+		$users = get_users( [ 'role' => $role ] );
+		foreach ( $users as $user ) {
+			if ( ! in_array( $role, (array) $user->roles, true ) ) {
+				continue;
+			}
+
+			foreach ( $capabilities as $cap ) {
+				// remove capability if user has it.
+				if ( ! $user->has_cap( $cap ) ) {
+					continue;
+				}
+
+				$user->remove_cap( $cap );
+			}
+			$user->remove_role( $role );
+		}
+	}
 }
 
 // Run the uninstaller.

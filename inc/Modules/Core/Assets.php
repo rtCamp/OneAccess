@@ -67,6 +67,7 @@ class Assets implements Registrable {
 				'restNonce'    => wp_create_nonce( 'wp_rest' ),
 				'api_key'      => Settings::get_api_key(),
 				'settingsLink' => esc_url( admin_url( 'admin.php?page=oneaccess-settings' ) ),
+				'siteType'     => Settings::get_site_type(),
 			];
 		}
 

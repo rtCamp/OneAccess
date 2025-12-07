@@ -45,7 +45,7 @@ const SiteTypeSelector = ( { value, setSiteType }: {
 const OnboardingScreen = () => {
 	// WordPress provides snake_case keys here. Using them intentionally.
 	// eslint-disable-next-line camelcase
-	const { nonce, setup_url, site_type } = window.OneAccessSettings;
+	const { nonce, setup_url, site_type } = window.OneAccessOnboarding;
 
 	const [ siteType, setSiteType ] = useState<SiteType | ''>( site_type || '' );
 	const [ notice, setNotice ] = useState<NoticeState | null>( null );

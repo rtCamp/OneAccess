@@ -15,16 +15,29 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import { isValidUrl } from '../js/utils';
+import type { defaultBrandSite } from '@/admin/settings/page';
 
-const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, originalData = {} } ) => {
+interface SiteModalProps {
+	formData: typeof defaultBrandSite;
+	setFormData: ( data: typeof defaultBrandSite ) => void;
+	onSubmit: () => Promise< Response | void >;
+	onClose: () => void;
+	editing: boolean;
+	originalData: typeof defaultBrandSite | undefined;
+}
+
+const SiteModal = (
+	{ formData, setFormData, onSubmit, onClose, editing, originalData }
+	: SiteModalProps,
+) => {
 	const [ errors, setErrors ] = useState( {
 		name: '',
 		url: '',
 		api_key: '',
 		message: '',
 	} );
-	const [ showNotice, setShowNotice ] = useState( false );
-	const [ isProcessing, setIsProcessing ] = useState( false );
+	const [ showNotice, setShowNotice ] = useState< boolean >( false );
+	const [ isProcessing, setIsProcessing ] = useState< boolean >( false );
 
 	// Check if form data has changed from original data (only for editing mode)
 	const hasChanges = useMemo( () => {
@@ -33,13 +46,13 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 		} // Always allow submission for new sites
 
 		return (
-			formData.name !== originalData.name ||
-			formData.url !== originalData.url ||
-			formData.api_key !== originalData.api_key
+			formData.name !== originalData?.name ||
+			formData.url !== originalData?.url ||
+			formData.api_key !== originalData?.api_key
 		);
 	}, [ editing, formData, originalData ] );
 
-	const handleSubmit = async () => {
+	const handleSubmit = async ():Promise<void> => {
 		// Validate inputs
 		let siteUrlError = '';
 		if ( ! formData.url.trim() ) {
@@ -99,18 +112,11 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 			setShowNotice( false );
 			const submitResponse = await onSubmit();
 
-			if ( ! submitResponse.ok ) {
-				const errorData = await submitResponse.json();
+			if ( ! submitResponse?.ok ) {
+				const errorData = await submitResponse?.json();
 				setErrors( {
 					...newErrors,
 					message: errorData.message || __( 'An error occurred while saving the site. Please try again.', 'oneaccess' ),
-				} );
-				setShowNotice( true );
-			}
-			if ( submitResponse?.data?.status === 400 ) {
-				setErrors( {
-					...newErrors,
-					message: submitResponse?.message || __( 'An error occurred while saving the site. Please try again.', 'oneaccess' ),
 				} );
 				setShowNotice( true );
 			}
@@ -158,7 +164,6 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 				label={ __( 'Site Name*', 'oneaccess' ) }
 				value={ formData.name }
 				onChange={ ( value ) => setFormData( { ...formData, name: value } ) }
-				error={ errors.name }
 				help={ __( 'This is the name of the site that will be registered.', 'oneaccess' ) }
 				__next40pxDefaultSize
 				__nextHasNoMarginBottom
@@ -167,7 +172,6 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 				label={ __( 'Site URL*', 'oneaccess' ) }
 				value={ formData.url }
 				onChange={ ( value ) => setFormData( { ...formData, url: value } ) }
-				error={ errors.url }
 				help={ __( 'It must start with http or https and end with /, like: https://rtcamp.com/', 'oneaccess' ) }
 				__next40pxDefaultSize
 				__nextHasNoMarginBottom
@@ -176,7 +180,6 @@ const SiteModal = ( { formData, setFormData, onSubmit, onClose, editing, origina
 				label={ __( 'API Key*', 'oneaccess' ) }
 				value={ formData.api_key }
 				onChange={ ( value ) => setFormData( { ...formData, api_key: value } ) }
-				error={ errors.api_key }
 				help={ __( 'This is the api key that will be used to authenticate the site for OneAccess.', 'oneaccess' ) }
 				__nextHasNoMarginBottom
 			/>

@@ -96,10 +96,10 @@ class User_Roles implements Registrable {
 
 		// Add additional capabilities to the network admin role.
 		$additional_caps = [
-			'oneaccess_manage_users',
 			'oneaccess_manage_requests',
-			'oneaccess_manage_sites',
 			'oneaccess_manage_settings',
+			'oneaccess_manage_sites',
+			'oneaccess_manage_users',
 		];
 
 		foreach ( $additional_caps as $cap ) {

@@ -90,18 +90,3 @@ register_activation_hook(
 		\OneAccess\Modules\Core\DB::maybe_create_tables();
 	}
 );
-
-/**
- * Deactivation hook to remove roles and change user roles.
- */
-register_deactivation_hook(
-	ONEACCESS_PLUGIN_BASENAME,
-	static function (): void {
-
-		if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) ) {
-			return;
-		}
-
-		\OneAccess\Modules\Core\User_Roles::remove_roles_and_change_user_roles();
-	}
-);

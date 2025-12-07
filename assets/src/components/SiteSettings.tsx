@@ -15,16 +15,18 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
-const API_NAMESPACE = OneAccessSettings.restUrl + '/oneaccess/v1';
-const NONCE = OneAccessSettings.restNonce;
-const API_KEY = OneAccessSettings.api_key;
+import type { NoticeType } from '@/admin/settings/page';
+
+const API_NAMESPACE = window.OneAccessSettings.restUrl + '/oneaccess/v1';
+const NONCE = window.OneAccessSettings.restNonce;
+const API_KEY = window.OneAccessSettings.api_key;
 
 const SiteSettings = () => {
-	const [ apiKey, setApiKey ] = useState( '' );
-	const [ isLoading, setIsLoading ] = useState( false );
-	const [ notice, setNotice ] = useState( null );
-	const [ governingSite, setGoverningSite ] = useState( '' );
-	const [ showDisconectionModal, setShowDisconectionModal ] = useState( false );
+	const [ apiKey, setApiKey ] = useState< string >( '' );
+	const [ isLoading, setIsLoading ] = useState< boolean >( false );
+	const [ notice, setNotice ] = useState< NoticeType | null >( null );
+	const [ governingSite, setGoverningSite ] = useState< string >( '' );
+	const [ showDisconectionModal, setShowDisconectionModal ] = useState< boolean >( false );
 
 	const fetchApiKey = useCallback( async () => {
 		try {
@@ -217,6 +219,7 @@ const SiteSettings = () => {
 							disabled={ true }
 							help={ __( 'This key is used for secure communication with the Governing site.', 'oneaccess' ) }
 							__nextHasNoMarginBottom
+							onChange={ () => {} } // to avoid ts warning
 						/>
 					</div>
 				</CardBody>
@@ -244,6 +247,7 @@ const SiteSettings = () => {
 						help={ __( 'This is the URL of the Governing site this Brand site is connected to.', 'oneaccess' ) }
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
+						onChange={ () => {} } // to avoid ts warning
 					/>
 				</CardBody>
 			</Card>

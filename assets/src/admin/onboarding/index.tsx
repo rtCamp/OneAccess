@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import OnboardingScreen, { type SiteType } from './page';
 
-interface OneAccessSettings {
+interface OneAccessOnboarding {
 	nonce: string;
 	site_type: SiteType | '';
 	setup_url: string;
@@ -9,7 +9,7 @@ interface OneAccessSettings {
 
 declare global {
 	interface Window {
-		OneAccessSettings: OneAccessSettings;
+		OneAccessOnboarding: OneAccessOnboarding;
 	}
 }
 

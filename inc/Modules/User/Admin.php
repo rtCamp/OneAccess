@@ -202,7 +202,7 @@ class Admin implements Registrable {
 
 		wp_localize_script(
 			Assets::ONBOARDING_SCRIPT_HANDLE,
-			'OneAccessSettings',
+			'OneAccessOnboarding',
 			[
 				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				'setup_url' => admin_url( sprintf( 'admin.php?page=%s', self::SCREEN_ID ) ),
