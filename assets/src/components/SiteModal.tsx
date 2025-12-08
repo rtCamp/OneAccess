@@ -27,11 +27,18 @@ interface SiteModalProps {
 	originalData: typeof defaultBrandSite | undefined;
 }
 
+interface ErrorsType {
+	name: string;
+	url: string;
+	api_key: string;
+	message: string;
+}
+
 const SiteModal = (
 	{ formData, setFormData, onSubmit, onClose, editing, sites, originalData }
 	: SiteModalProps,
 ) => {
-	const [ errors, setErrors ] = useState( {
+	const [ errors, setErrors ] = useState< ErrorsType >( {
 		name: '',
 		url: '',
 		api_key: '',
