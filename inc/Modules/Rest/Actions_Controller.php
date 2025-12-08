@@ -342,10 +342,20 @@ class Actions_Controller extends Abstract_REST_Controller {
 	 * @return array|\WP_Error Response or error.
 	 */
 	private function send_users_batch( array $users_batch, string $governing_site_url ): array|\WP_Error {
+		$body = wp_json_encode( [ 'users' => $users_batch ] );
+
+		// Handle JSON encoding failure.
+		if ( false === $body ) {
+			return new \WP_Error(
+				'json_encode_failed',
+				__( 'Failed to encode users data to JSON.', 'oneaccess' )
+			);
+		}
+
 		return wp_safe_remote_post(
 			trailingslashit( esc_url_raw( $governing_site_url ) ) . 'wp-json/' . self::NAMESPACE . '/add-deduplicated-users',
 			[
-				'body'    => wp_json_encode( [ 'users' => $users_batch ] ),
+				'body'    => $body,
 				'headers' => [
 					'Content-Type'      => 'application/json',
 					'X-OneAccess-Token' => Encryptor::decrypt( get_option( Settings::OPTION_CONSUMER_API_KEY, '' ) ),
@@ -358,9 +368,9 @@ class Actions_Controller extends Abstract_REST_Controller {
 	/**
 	 * Callback to send users in batch for deduplication.
 	 *
-	 * @return \WP_REST_Response
+	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function send_users_for_deduplication(): WP_REST_Response {
+	public function send_users_for_deduplication(): WP_REST_Response|\WP_Error {
 
 		$paged       = 1;
 		$users_batch = [];
@@ -368,9 +378,19 @@ class Actions_Controller extends Abstract_REST_Controller {
 		$site_url    = get_site_url();
 
 		$governing_site_url = Settings::get_parent_site_url();
-		$total_users_sent   = 0;
-		$errors             = [];
-		$responses          = [];
+
+		// If governing site URL is not set, return error.
+		if ( empty( $governing_site_url ) ) {
+			return new \WP_Error(
+				'no_governing_site',
+				__( 'Governing site URL is not set.', 'oneaccess' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$total_users_sent = 0;
+		$errors           = [];
+		$responses        = [];
 
 		while ( true ) {
 			$user_query = new \WP_User_Query(
@@ -508,8 +528,8 @@ class Actions_Controller extends Abstract_REST_Controller {
 
 		// Compute available sites from full list (always all sites for dropdown).
 		$available_sites = array_map(
-			static function ( $site_config ) {
-				$site_name = $site_config['name'] ?? __( 'Unknown Site', 'oneaccess' );
+			static function ( $site_config ): array {
+				$site_name = $site_config['name'];
 				return [
 					'label' => $site_name,
 					'value' => $site_name,
@@ -562,8 +582,8 @@ class Actions_Controller extends Abstract_REST_Controller {
 		if ( ! empty( $site ) ) {
 			$oneaccess_sites = array_filter(
 				$full_sites,
-				static function ( $s ) use ( $site ) {
-					return ( ( $s['name'] ?? '' ) === $site );
+				static function ( $s ) use ( $site ): bool {
+					return ( $s['name'] === $site );
 				}
 			);
 		}
@@ -829,7 +849,7 @@ class Actions_Controller extends Abstract_REST_Controller {
 		$user_data = $this->prepare_user_data( $user, $site_name, $site_url );
 
 		$governing_site_url = Settings::get_parent_site_url();
-		$this->send_users_batch( [ $user_data ], $governing_site_url );
+		$this->send_users_batch( [ $user_data ], (string) $governing_site_url );
 	}
 
 	/**
@@ -990,15 +1010,9 @@ class Actions_Controller extends Abstract_REST_Controller {
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
-				if ( ! empty( $site_url ) ) {
-					$processed_sites[] = $site_url;
-				}
 				continue;
 			}
-
-			if ( empty( $site_url ) ) {
-				continue;
-			}
+			$processed_sites[] = $site_url;
 
 			// Make remote request to rebuild index.
 			$response = wp_safe_remote_post(

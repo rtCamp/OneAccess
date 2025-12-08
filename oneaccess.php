@@ -92,7 +92,7 @@ function load_plugin(): void {
  * Activation hook.
  */
 register_activation_hook(
-	ONEACCESS_PLUGIN_BASENAME,
+	__FILE__,
 	static function (): void {
 		if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) ) {
 			return;

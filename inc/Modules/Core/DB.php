@@ -201,8 +201,9 @@ class DB implements Registrable {
 	 * @return void
 	 */
 	private static function update_existing_user( $existing_user, array $user, string $table_name ): void {
-		$existing_sites_info = self::decode_sites_info( $existing_user->sites_info );
+		$existing_sites_info = isset( $existing_user->sites_info ) ? self::decode_sites_info( $existing_user->sites_info ) : [];
 		$new_site_info       = self::build_site_info( $user );
+		$id                  = isset( $existing_user->id ) ? (int) $existing_user->id : 0;
 
 		$site_exists = self::check_site_exists( $existing_sites_info, $new_site_info );
 
@@ -212,7 +213,7 @@ class DB implements Registrable {
 			$existing_sites_info = self::update_site_info( $existing_sites_info, $new_site_info );
 		}
 
-		self::save_updated_user( $existing_user->id, $existing_sites_info, $table_name );
+		self::save_updated_user( $id, $existing_sites_info, $table_name );
 	}
 
 	/**

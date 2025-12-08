@@ -51,6 +51,7 @@ class Notice implements Registrable {
 
 		// get user from user_id or current user.
 		$user_id = isset( $_GET['user_id'] ) ? filter_input( INPUT_GET, 'user_id', FILTER_SANITIZE_NUMBER_INT ) : get_current_user_id();  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this is to know on which user profile page we are to show notice or not.
+		$user_id = (int) $user_id;
 
 		// get user profile request data.
 		$profile_request_data = DB::get_latest_profile_request_by_user_id( $user_id );

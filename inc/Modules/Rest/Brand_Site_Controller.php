@@ -235,10 +235,6 @@ class Brand_Site_Controller extends Abstract_REST_Controller {
 		// get all sites data.
 		$oneaccess_sites_info = Settings::get_shared_sites();
 
-		if ( ! is_array( $oneaccess_sites_info ) ) {
-			$oneaccess_sites_info = [];
-		}
-
 		$all_profile_requests = [];
 		$fetched_sites        = [];
 		$pending_requests     = 0;

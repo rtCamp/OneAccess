@@ -31,7 +31,7 @@ class User_Roles implements Registrable {
 	 */
 	public function register_hooks(): void {
 		// modify user caps to core user roles.
-		add_action( 'user_has_cap', [ $this, 'modify_user_caps' ], 10, 4 );
+		add_filter( 'user_has_cap', [ $this, 'modify_user_caps' ], 10, 1 );
 	}
 
 	/**

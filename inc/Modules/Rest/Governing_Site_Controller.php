@@ -376,7 +376,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			require_once ABSPATH . 'wp-admin/includes/user.php';
 		}
 
-		wp_delete_user( $user->ID, '0' );
+		wp_delete_user( (int) $user->ID, 0 );
 
 		return new \WP_REST_Response(
 			[
@@ -410,7 +410,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		}
 
 		// Validate sites.
-		if ( ! is_array( $sites ) || empty( $sites ) ) {
+		if ( ! is_array( $sites ) ) {
 			return new \WP_REST_Response(
 				[
 					'success' => false,
@@ -518,9 +518,9 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
 	 *
-	 * @return \WP_REST_Response|
+	 * @return \WP_REST_Response
 	 */
-	public function reject_profile( \WP_REST_Request $request ): \WP_REST_Response {
+	public function reject_profile( WP_REST_Request $request ): \WP_REST_Response {
 		$user_email        = sanitize_email( $request->get_param( 'user_email' ) );
 		$rejection_comment = sanitize_text_field( $request->get_param( 'rejection_comment' ) );
 		$request_id        = absint( $request->get_param( 'request_id' ) );
@@ -615,7 +615,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		}
 
 		// get user profile request data.
-		$profile_requests_data = DB::get_profile_request_by_id( $request_id );
+		$profile_requests_data = DB::get_profile_request_by_id( (int) $request_id );
 
 		if ( ! $profile_requests_data || 'pending' !== $profile_requests_data['status'] ) {
 			return new \WP_REST_Response(
@@ -628,7 +628,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		}
 
 		// Update the profile request status to approved.
-		DB::approve_profile_request_by_id( $request_id );
+		DB::approve_profile_request_by_id( (int) $request_id );
 
 		// Update user meta with the new profile data.
 		if ( ! empty( $profile_requests_data['request_data'] ) ) {
@@ -713,7 +713,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		}
 
 		// Validate sites.
-		if ( ! is_array( $sites ) || empty( $sites ) ) {
+		if ( ! is_array( $sites ) ) {
 			return new \WP_REST_Response(
 				[
 					'success' => false,
@@ -938,17 +938,15 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$db_results           = [];
 
 		foreach ( $roles as $key => $value ) {
-			$site_url = $oneaccess_sites_info[ $key ]['url'] ?? '';
-			$api_key  = $oneaccess_sites_info[ $key ]['api_key'] ?? '';
+			$site_url = (string) $oneaccess_sites_info[ $key ]['url'] ?: '';
+			$api_key  = $oneaccess_sites_info[ $key ]['api_key'] ?: '';
 			$new_role = $value;
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
-				if ( ! empty( $site_url ) ) {
-					$processed_sites[] = $site_url;
-				}
 				continue;
 			}
+			$processed_sites[] = $site_url;
 
 			$request_url = $site_url . '/wp-json/' . self::NAMESPACE . '/update-user';
 
@@ -969,11 +967,11 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 			if ( is_wp_error( $response ) ) {
 				$error_log[] = [
-					'site_name' => $site_url ?? '',
+					'site_name' => $site_url,
 					'message'   => sprintf(
 						/* translators: %s is the site URL */
 						__( 'Error updating user role on site %s.', 'oneaccess' ),
-						esc_html( $site_url ?? '' )
+						esc_html( $site_url )
 					),
 				];
 				continue;
@@ -983,11 +981,11 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 			if ( 200 !== $response_code ) {
 				$error_log[] = [
-					'site_name' => $site_url ?? '',
+					'site_name' => $site_url,
 					'message'   => sprintf(
 						/* translators: %s is the site URL */
 						__( 'Failed to update user role on site %s.', 'oneaccess' ),
-						esc_html( $site_url ?? '' )
+						esc_html( $site_url )
 					),
 				];
 				continue;
@@ -997,14 +995,14 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 			if ( ! $response_body['success'] ) {
 				$error_log[] = [
-					'site_name' => $site_url ?? '',
+					'site_name' => $site_url,
 					'message'   => $response_body['message'] ?? __( 'Failed to update user role on site.', 'oneaccess' ),
 				];
 				continue;
 			}
 
 			$response_data[] = [
-				'site'    => $oneaccess_sites_info[ $key ]['name'] ?? $site_url,
+				'site'    => $oneaccess_sites_info[ $key ]['name'] ?: $site_url,
 				'status'  => 'success',
 				'message' => __( 'User role updated successfully.', 'oneaccess' ),
 			];
@@ -1107,11 +1105,11 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		wp_update_user(
 			[
 				'ID'            => $user_id,
-				'display_name'  => $full_name ?? $username,
-				'user_nicename' => sanitize_title( $full_name ?? $username ),
-				'first_name'    => explode( ' ', $full_name )[0] ?? '',
-				'last_name'     => explode( ' ', $full_name )[1] ?? '',
-				'role'          => $role ?? 'subscriber',
+				'display_name'  => $full_name,
+				'user_nicename' => sanitize_title( $full_name ),
+				'first_name'    => explode( ' ', $full_name )[0] ?: '',
+				'last_name'     => explode( ' ', $full_name )[1] ?: '',
+				'role'          => $role ?: 'subscriber',
 			]
 		);
 
@@ -1142,8 +1140,8 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 		global $wpdb;
 
-		$paged        = intval( $request->get_param( 'paged' ) ) ?? 1;
-		$per_page     = intval( $request->get_param( 'per_page' ) ) ?? 20;
+		$paged        = intval( $request->get_param( 'paged' ) ) ?: 1;
+		$per_page     = intval( $request->get_param( 'per_page' ) ) ?: 20;
 		$search_query = sanitize_text_field( $request->get_param( 'search_query' ) ) ?? '';
 		$role         = sanitize_text_field( $request->get_param( 'role' ) ) ?? '';
 		$site         = sanitize_text_field( $request->get_param( 'site' ) ) ?? '';
@@ -1260,9 +1258,6 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			}
 		}
 
-		// Re-index the processed_users array.
-		$processed_users = array_values( $processed_users );
-
 		// Calculate total pages.
 		$total_pages = ceil( $total_users / $per_page );
 
@@ -1333,7 +1328,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		}
 
 		// validate userdate.
-		if ( ! is_array( $userdata ) || empty( $userdata ) ) {
+		if ( ! is_array( $userdata ) ) {
 			return new \WP_REST_Response(
 				[
 					'success' => false,
@@ -1344,7 +1339,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		}
 
 		// validate sites.
-		if ( ! is_array( $sites ) || empty( $sites ) ) {
+		if ( ! is_array( $sites ) ) {
 			return new \WP_REST_Response(
 				[
 					'success' => false,
@@ -1402,11 +1397,9 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
-				if ( ! empty( $site_url ) ) {
-					$processed_sites[] = $site_url;
-				}
 				continue;
 			}
+			$processed_sites[] = $site_url;
 
 			$api_key   = $oneaccess_sites_info[ $site_url ]['api_key'] ?? '';
 			$site_name = $oneaccess_sites_info[ $site_url ]['name'] ?? '';

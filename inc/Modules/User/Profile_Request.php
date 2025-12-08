@@ -65,15 +65,19 @@ class Profile_Request implements Registrable {
 			$profile_request_data = [];
 		}
 
-		$request_exists = is_array( $profile_request_data ) && ! empty( $profile_request_data );
-
-		if ( $request_exists ) {
+		if ( ! empty( $profile_request_data ) ) {
+			// if there is already a pending request, do not create a new one.
 			return;
 		}
 
 		// get $_POST data and compare with existing user data & user meta.
 		$post_data = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- this is to intercept profile update request before updating into DB.
 		$user_data = get_userdata( $user_id );
+
+		if ( ! $user_data ) {
+			return;
+		}
+
 		$user_meta = get_user_meta( $user_id );
 
 		$updated_metadata = [];
@@ -110,8 +114,8 @@ class Profile_Request implements Registrable {
 			}
 
 			$updated_metadata[ $field ] = [
-				'old' => self::sanitize_user_fields( $field, isset( $user_meta[ $field ] ) ? $user_meta[ $field ][0] : '' ) ?? '',
-				'new' => self::sanitize_user_fields( $field, $post_data[ $field ] ) ?? '',
+				'old' => self::sanitize_user_fields( $field, isset( $user_meta[ $field ] ) ? $user_meta[ $field ][0] : '' ),
+				'new' => self::sanitize_user_fields( $field, $post_data[ $field ] ),
 			];
 			$post_data[ $field ]        = $user_meta[ $field ][0] ?? '';
 		}

@@ -254,7 +254,7 @@ class Admin implements Registrable {
 		wp_enqueue_style( Assets::ADMIN_USER_STYLES_HANDLE );
 
 		$current_user                  = isset( $_GET['user_id'] ) ? filter_input( INPUT_GET, 'user_id', FILTER_SANITIZE_NUMBER_INT ) : get_current_user_id(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this is to know on which user profile page we are.      
-		$get_user_profile_request_data = DB::get_latest_profile_request_by_user_id( $current_user );
+		$get_user_profile_request_data = DB::get_latest_profile_request_by_user_id( (int) $current_user );
 		$current_user_request          = is_array( $get_user_profile_request_data ) && ! empty( $get_user_profile_request_data ) ? $get_user_profile_request_data : null;
 
 		wp_localize_script(
