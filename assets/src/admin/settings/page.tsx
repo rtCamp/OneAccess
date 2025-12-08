@@ -69,30 +69,27 @@ const SettingsPage = () => {
 		}
 	}, [ sites, siteType ] );
 
-	const handleFormSubmit = async () : Promise< Response | void > => {
+	const handleFormSubmit = async () : Promise<void > => {
 		const updated : BrandSite[] = editingIndex !== null
 			? sites.map( ( item, i ) => ( i === editingIndex ? formData : item ) )
 			: [ ...sites, formData ];
 		try {
-			const response = await apiFetch<{ oneaccess_shared_sites?: BrandSite[] }>( {
+			apiFetch<{ oneaccess_shared_sites?: BrandSite[] }>( {
 				path: '/wp/v2/settings',
 				method: 'POST',
 				data: { oneaccess_shared_sites: updated },
-			} ) as Response;
-
-			if ( ! response?.oneaccess_shared_sites ) {
-				console.error( // eslint-disable-line no-console
-					__( 'Failed to save Brand site. Please try again.', 'oneaccess' ),
-				);
-				return response;
-			}
-
-			const sitesData = response?.oneaccess_shared_sites || [];
-			setSites( sitesData );
-
-			if ( sitesData.length === 0 || sitesData.length === 1 ) {
-				window.location.reload();
-			}
+			} ).then( ( settings ) => {
+				if ( ! settings?.oneaccess_shared_sites ) {
+					throw new Error( 'No shared sites in response' );
+				}
+				const previousLength = sites.length;
+				setSites( settings.oneaccess_shared_sites );
+				if ( ( settings.oneaccess_shared_sites.length === 1 && previousLength === 0 ) || ( previousLength === 1 && settings.oneaccess_shared_sites.length === 0 ) ) {
+					window.location.reload();
+				}
+			} ).catch( () => {
+				throw new Error( 'Failed to update shared sites' );
+			} );
 
 			setNotice( {
 				type: 'success',
@@ -114,29 +111,24 @@ const SettingsPage = () => {
 		const updated : BrandSite[] = sites.filter( ( _, i ) => i !== index );
 
 		try {
-			const response = await apiFetch<{ oneaccess_shared_sites?: BrandSite[] }>( {
+			await apiFetch<{ oneaccess_shared_sites?: BrandSite[] }>( {
 				path: '/wp/v2/settings',
 				method: 'POST',
 				data: { oneaccess_shared_sites: updated },
-			} ) as Response;
-
-			if ( ! response?.oneaccess_shared_sites ) {
-				setNotice( {
-					type: 'error',
-					message: __( 'Failed to delete Brand site. Please try again.', 'oneaccess' ),
-				} );
-				return;
-			}
-			setNotice( {
-				type: 'success',
-				message: __( 'Brand Site deleted successfully.', 'oneaccess' ),
+			} ).then( ( settings ) => {
+				if ( ! settings?.oneaccess_shared_sites ) {
+					throw new Error( 'No shared sites in response' );
+				}
+				const previousLength = sites.length;
+				setSites( settings.oneaccess_shared_sites );
+				if ( ( settings.oneaccess_shared_sites.length === 1 && previousLength === 0 ) || ( previousLength === 1 && settings.oneaccess_shared_sites.length === 0 ) ) {
+					window.location.reload();
+				} else {
+					document.body.classList.remove( 'oneaccess-missing-brand-sites' );
+				}
+			} ).catch( () => {
+				throw new Error( 'Failed to update shared sites' );
 			} );
-			setSites( updated );
-			if ( updated.length === 0 ) {
-				window.location.reload();
-			} else {
-				document.body.classList.remove( 'oneaccess-missing-brand-sites' );
-			}
 		} catch {
 			setNotice( {
 				type: 'error',
@@ -188,6 +180,7 @@ const SettingsPage = () => {
 						setFormData( defaultBrandSite );
 					} }
 					editing={ editingIndex !== null }
+					sites={ sites }
 					originalData={ editingIndex !== null ? sites[ editingIndex ] : undefined }
 				/>
 			) }

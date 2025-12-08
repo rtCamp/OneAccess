@@ -23,11 +23,12 @@ interface SiteModalProps {
 	onSubmit: () => Promise< Response | void >;
 	onClose: () => void;
 	editing: boolean;
+	sites: typeof defaultBrandSite[];
 	originalData: typeof defaultBrandSite | undefined;
 }
 
 const SiteModal = (
-	{ formData, setFormData, onSubmit, onClose, editing, originalData }
+	{ formData, setFormData, onSubmit, onClose, editing, sites, originalData }
 	: SiteModalProps,
 ) => {
 	const [ errors, setErrors ] = useState( {
@@ -103,6 +104,34 @@ const SiteModal = (
 				setErrors( {
 					...newErrors,
 					message: __( 'Health check failed, please verify API key and make sure there\'s no governing site connected.', 'oneaccess' ),
+				} );
+				setShowNotice( true );
+				setIsProcessing( false );
+				return;
+			}
+
+			// check if same url is already added or not.
+			let isAlreadyExists = false;
+			sites.forEach( ( site ) => {
+				const trimmedSiteUrl = site.url.endsWith( '/' )
+					? site.url
+					: `${ site.url }/`;
+				const trimmedFormUrl = formData.url.endsWith( '/' )
+					? formData.url
+					: `${ formData.url }/`;
+				if ( trimmedSiteUrl === trimmedFormUrl ) {
+					if ( editing && originalData?.url === formData.url ) {
+						// allow if url is same as original url in editing mode
+						return;
+					}
+					isAlreadyExists = true;
+				}
+			} );
+
+			if ( isAlreadyExists ) {
+				setErrors( {
+					...newErrors,
+					message: __( 'Site URL already exists. Please use a different URL.', 'oneaccess' ),
 				} );
 				setShowNotice( true );
 				setIsProcessing( false );

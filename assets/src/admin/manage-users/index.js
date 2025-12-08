@@ -14,14 +14,13 @@ import CreateUser from '../../components/CreateUser';
 import SharedUsers from '../../components/SharedUsers';
 import ProfileRequests from '../../components/ProfileRequests';
 
-const NONCE = OneAccess.restNonce;
-const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
-const API_KEY = OneAccess.api_key;
+const NONCE = window.OneAccess.restNonce;
+const API_NAMESPACE = window.OneAccess.restUrl + '/oneaccess/v1';
+const availableSites = window.OneAccess.availableSites || [];
 
 const TabPanel = () => {
 	const [ activeTab, setActiveTab ] = useState( 'users' );
 	const [ isLoading, setIsLoading ] = useState( false );
-	const [ availableSites, setAvailableSites ] = useState( [] );
 	const [ profileRequestsCount, setProfileRequestsCount ] = useState( 0 );
 	const [ notice, setNotice ] = useState( {
 		type: '',
@@ -29,6 +28,7 @@ const TabPanel = () => {
 	} );
 
 	const fetchProfileRequestsCount = useCallback( async () => {
+		setIsLoading( true );
 		try {
 			const response = await fetch(
 				`${ API_NAMESPACE }/get-profile-requests?${ new Date().getTime().toString() }`,
@@ -51,45 +51,12 @@ const TabPanel = () => {
 				type: 'error',
 				message: __( 'Failed to fetch profile requests count.', 'oneaccess' ),
 			} );
-		}
-	}, [] );
-
-	const fetchAvailableSites = useCallback( async () => {
-		setIsLoading( true );
-		try {
-			const response = await fetch(
-				`${ API_NAMESPACE }/shared-sites?${ new Date().getTime().toString() }`,
-				{
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-WP-Nonce': NONCE,
-						'X-OneAccess-Token': API_KEY,
-					},
-				},
-			);
-
-			if ( ! response.ok ) {
-				setNotice( {
-					type: 'error',
-					message: __( 'Failed to fetch available sites.', 'oneaccess' ),
-				} );
-				throw new Error( 'Failed to fetch available sites' );
-			}
-			const data = await response.json();
-			setAvailableSites( data.sites_data || [] );
-		} catch ( error ) {
-			setNotice( {
-				type: 'error',
-				message: __( 'Failed to fetch available sites.', 'oneaccess' ),
-			} );
 		} finally {
 			setIsLoading( false );
 		}
 	}, [] );
 
 	useEffect( () => {
-		fetchAvailableSites();
 		fetchProfileRequestsCount();
 	}, [] ); /* eslint-disable-line react-hooks/exhaustive-deps */
 

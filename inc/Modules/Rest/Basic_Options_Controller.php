@@ -30,11 +30,6 @@ class Basic_Options_Controller extends Abstract_REST_Controller {
 			'/site-type',
 			[
 				[
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_site_type' ],
-					'permission_callback' => [ self::class, 'permission_callback' ],
-				],
-				[
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'set_site_type' ],
 					'permission_callback' => [ self::class, 'permission_callback' ],
@@ -43,35 +38,6 @@ class Basic_Options_Controller extends Abstract_REST_Controller {
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-					],
-				],
-			]
-		);
-
-		/**
-		 * Register a route which will store array of sites data like site name, site url, its GitHub repo and api key.
-		 */
-		register_rest_route(
-			self::NAMESPACE,
-			'/shared-sites',
-			[
-				[
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_shared_sites' ],
-					'permission_callback' => [ self::class, 'permission_callback' ],
-				],
-				[
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'set_shared_sites' ],
-					'permission_callback' => [ self::class, 'permission_callback' ],
-					'args'                => [
-						'sites_data' => [
-							'required'          => true,
-							'type'              => 'array',
-							'validate_callback' => static function ( $value ): bool {
-								return is_array( $value );
-							},
 						],
 					],
 				],
@@ -133,21 +99,6 @@ class Basic_Options_Controller extends Abstract_REST_Controller {
 	}
 
 	/**
-	 * Get the site type.
-	 *
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public function get_site_type(): WP_REST_Response|\WP_Error {
-
-		return rest_ensure_response(
-			[
-				'success'   => true,
-				'site_type' => Settings::get_site_type(),
-			]
-		);
-	}
-
-	/**
 	 * Set the site type.
 	 *
 	 * @param \WP_REST_Request $request The request object.
@@ -195,63 +146,6 @@ class Basic_Options_Controller extends Abstract_REST_Controller {
 			[
 				'success'   => $success,
 				'site_type' => $site_type,
-			]
-		);
-	}
-
-	/**
-	 * Get shared sites data.
-	 *
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public function get_shared_sites(): WP_REST_Response|\WP_Error {
-		$shared_sites = Settings::get_shared_sites();
-		return rest_ensure_response(
-			[
-				'success'    => true,
-				'sites_data' => array_values( $shared_sites ),
-			]
-		);
-	}
-
-	/**
-	 * Set shared sites data.
-	 *
-	 * @param \WP_REST_Request $request The request object.
-	 *
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public function set_shared_sites( WP_REST_Request $request ): WP_REST_Response|\WP_Error {
-
-		$body         = $request->get_body();
-		$decoded_body = json_decode( $body, true );
-		$sites_data   = $decoded_body['sites_data'] ?? [];
-
-		// check if same url exists more than once or not.
-		$urls = [];
-		foreach ( $sites_data as $site ) {
-			if ( isset( $site['url'] ) && in_array( $site['url'], $urls, true ) ) {
-				return new \WP_Error( 'duplicate_site_url', __( 'Brand Site already exists.', 'oneaccess' ), [ 'status' => 400 ] );
-			}
-			$urls[] = trailingslashit( $site['url'] ) ?? '';
-		}
-
-		// add unique id to each site if not exists.
-		foreach ( $sites_data as &$site ) {
-			if ( isset( $site['id'] ) && ! empty( $site['id'] ) ) {
-				continue;
-			}
-
-			$site['id'] = wp_generate_uuid4();
-		}
-
-		$is_saved = Settings::set_shared_sites( $sites_data );
-
-		return rest_ensure_response(
-			[
-				'success'    => true,
-				'sites_data' => array_values( $sites_data ),
-				'is_saved'   => $is_saved,
 			]
 		);
 	}

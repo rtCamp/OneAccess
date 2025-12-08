@@ -15,6 +15,9 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
+/**
+ * Internal dependencies
+ */
 import type { NoticeType } from '@/admin/settings/page';
 
 const API_NAMESPACE = window.OneAccessSettings.restUrl + '/oneaccess/v1';
@@ -29,8 +32,8 @@ const SiteSettings = () => {
 	const [ showDisconectionModal, setShowDisconectionModal ] = useState< boolean >( false );
 
 	const fetchApiKey = useCallback( async () => {
+		setIsLoading( true );
 		try {
-			setIsLoading( true );
 			const response = await fetch( API_NAMESPACE + '/secret-key', {
 				method: 'GET',
 				headers: {

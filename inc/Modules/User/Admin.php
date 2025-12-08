@@ -238,6 +238,7 @@ class Admin implements Registrable {
 				Assets::get_localized_data(),
 				[
 					'availableRoles' => $user_roles,
+					'availableSites' => array_values( Settings::get_shared_sites() ),
 				]
 			)
 		);

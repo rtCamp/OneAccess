@@ -57,36 +57,34 @@ if ( ! \OneAccess\Autoloader::autoload() ) {
 }
 
 // Load the plugin.
-if ( class_exists( 'OneAccess\Main' ) ) {
-	add_action(
-		'plugins_loaded',
-		static function (): void {
-			\OneAccess\Main::instance();
-
-			//phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- @todo remove before submitting to .org.
-			load_plugin_textdomain( 'oneaccess', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-		}
-	);
-}
+add_action( 'plugins_loaded', '\OneAccess\load_plugin' );
 
 /**
- * Activation hook to add roles.
+ * Load OneAccess plugin functionality.
+ *
+ * @return void
  */
-register_activation_hook(
-	ONEACCESS_PLUGIN_BASENAME,
-	static function (): void {
+function load_plugin(): void {
 
-		if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) && ! class_exists( '\OneAccess\Modules\Core\DB' ) ) {
-			return;
-		}
-
-		\OneAccess\Modules\Core\User_Roles::create_brand_admin_role();
-		\OneAccess\Modules\Core\User_Roles::create_network_admin_role();
-
-		// Update user role on activation.
-		\OneAccess\Modules\Core\User_Roles::update_user_role_on_activation();
-
-		// Create database tables on activation.
-		\OneAccess\Modules\Core\DB::maybe_create_tables();
+	if ( ! class_exists( '\OneAccess\Main' ) ) {
+		return;
 	}
-);
+
+	\OneAccess\Main::instance();
+
+	//phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- @todo remove before submitting to .org.
+	load_plugin_textdomain( 'oneaccess', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+
+	if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) && ! class_exists( '\OneAccess\Modules\Core\DB' ) ) {
+		return;
+	}
+
+	\OneAccess\Modules\Core\User_Roles::create_brand_admin_role();
+	\OneAccess\Modules\Core\User_Roles::create_network_admin_role();
+
+	// Update user role on activation.
+	\OneAccess\Modules\Core\User_Roles::update_user_role_on_activation();
+
+	// Create database tables on activation.
+	\OneAccess\Modules\Core\DB::maybe_create_tables();
+}
