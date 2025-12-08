@@ -46,28 +46,28 @@ class User_Roles implements Registrable {
 		if ( ! Settings::is_consumer_site() ) {
 			return $allcaps;
 		}
-			// remove user creation, deletion and promotion caps.
-			$caps_to_remove = [
-				'create_users',
-				'delete_users',
-				'promote_users',
-			];
+		// remove user creation, deletion and promotion caps.
+		$caps_to_remove = [
+			'create_users',
+			'delete_users',
+			'promote_users',
+		];
 
-			foreach ( $caps_to_remove as $cap ) {
-				if ( ! isset( $allcaps[ $cap ] ) ) {
-					continue;
-				}
-
-				unset( $allcaps[ $cap ] );
+		foreach ( $caps_to_remove as $cap ) {
+			if ( ! isset( $allcaps[ $cap ] ) ) {
+				continue;
 			}
 
-			$current_user = wp_get_current_user();
+			unset( $allcaps[ $cap ] );
+		}
 
-			if ( ! in_array( self::BRAND_ADMIN, $current_user->roles, true ) ) {
-				$allcaps['edit_users'] = false;
-			}
+		$current_user = wp_get_current_user();
 
-			return $allcaps;
+		if ( ! in_array( self::BRAND_ADMIN, $current_user->roles, true ) ) {
+			$allcaps['edit_users'] = false;
+		}
+
+		return $allcaps;
 	}
 
 	/**
@@ -81,6 +81,11 @@ class User_Roles implements Registrable {
 
 		$admin_role = get_role( 'administrator' );
 		if ( ! $admin_role ) {
+			return;
+		}
+
+		// check if role already exists.
+		if ( get_role( self::NETWORK_ADMIN ) ) {
 			return;
 		}
 
@@ -118,6 +123,11 @@ class User_Roles implements Registrable {
 		$admin_role = get_role( 'administrator' );
 
 		if ( ! $admin_role ) {
+			return;
+		}
+
+		// check if role already exists.
+		if ( get_role( self::BRAND_ADMIN ) ) {
 			return;
 		}
 

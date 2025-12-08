@@ -56,8 +56,15 @@ if ( ! \OneAccess\Autoloader::autoload() ) {
 	return;
 }
 
-// Load the plugin.
-add_action( 'plugins_loaded', '\OneAccess\load_plugin' );
+/**
+ * Load plugin.
+ */
+if ( class_exists( 'OneAccess\Main' ) ) {
+	add_action(
+		'plugins_loaded',
+		'\OneAccess\load_plugin'
+	);
+}
 
 /**
  * Load OneAccess plugin functionality.
@@ -65,15 +72,7 @@ add_action( 'plugins_loaded', '\OneAccess\load_plugin' );
  * @return void
  */
 function load_plugin(): void {
-
-	if ( ! class_exists( '\OneAccess\Main' ) ) {
-		return;
-	}
-
 	\OneAccess\Main::instance();
-
-	//phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- @todo remove before submitting to .org.
-	load_plugin_textdomain( 'oneaccess', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 
 	if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) && ! class_exists( '\OneAccess\Modules\Core\DB' ) ) {
 		return;
@@ -82,9 +81,24 @@ function load_plugin(): void {
 	\OneAccess\Modules\Core\User_Roles::create_brand_admin_role();
 	\OneAccess\Modules\Core\User_Roles::create_network_admin_role();
 
-	// Update user role on activation.
-	\OneAccess\Modules\Core\User_Roles::update_user_role_on_activation();
+	//phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- @todo remove before submitting to .org.
+	load_plugin_textdomain( 'oneaccess', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 
 	// Create database tables on activation.
 	\OneAccess\Modules\Core\DB::maybe_create_tables();
 }
+
+/**
+ * Activation hook.
+ */
+register_activation_hook(
+	ONEACCESS_PLUGIN_BASENAME,
+	static function (): void {
+		if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) ) {
+			return;
+		}
+
+		// Update user role on activation.
+		\OneAccess\Modules\Core\User_Roles::update_user_role_on_activation();
+	}
+);
