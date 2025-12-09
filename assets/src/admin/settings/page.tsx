@@ -18,15 +18,15 @@ const NONCE = window.OneAccessSettings.restNonce;
 const siteType = ( window.OneAccessSettings.siteType as SiteType ) || '';
 
 export interface NoticeType {
-    type: 'success' | 'error' | 'warning' | 'info';
-    message: string;
+	type: 'success' | 'error' | 'warning' | 'info';
+	message: string;
 }
 
 export interface BrandSite {
-    id?: string;
-    name: string;
-    url: string;
-    api_key: string;
+	id?: string;
+	name: string;
+	url: string;
+	api_key: string;
 }
 
 export const defaultBrandSite: BrandSite = {

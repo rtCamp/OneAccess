@@ -74,18 +74,8 @@ if ( class_exists( 'OneAccess\Main' ) ) {
 function load_plugin(): void {
 	\OneAccess\Main::instance();
 
-	if ( ! class_exists( '\OneAccess\Modules\Core\User_Roles' ) && ! class_exists( '\OneAccess\Modules\Core\DB' ) ) {
-		return;
-	}
-
-	\OneAccess\Modules\Core\User_Roles::create_brand_admin_role();
-	\OneAccess\Modules\Core\User_Roles::create_network_admin_role();
-
 	//phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- @todo remove before submitting to .org.
 	load_plugin_textdomain( 'oneaccess', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-
-	// Create database tables on activation.
-	\OneAccess\Modules\Core\DB::maybe_create_tables();
 }
 
 /**

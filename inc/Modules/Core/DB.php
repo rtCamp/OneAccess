@@ -50,6 +50,9 @@ class DB implements Registrable {
 	public function register_hooks(): void {
 		// oneaccess_add_deduplicated_users to add users to deduplicated users table.
 		add_action( 'oneaccess_add_deduplicated_users', [ $this, 'add_deduplicated_users' ], 10, 1 );
+
+		// create or update tables on plugin load.
+		add_action( 'plugins_loaded', [ __CLASS__, 'maybe_create_tables' ] );
 	}
 
 	/**

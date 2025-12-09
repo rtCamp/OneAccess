@@ -73,8 +73,5 @@
 				// Add Rules for Jest here
 			}
 		}
-	],
-	"parserOptions": {
-		"./tsconfig.json": true // to make sure eslint picks up tsconfig.json settings not default ones
-	}
+	]
 }
