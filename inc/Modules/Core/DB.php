@@ -52,7 +52,7 @@ class DB implements Registrable {
 		add_action( 'oneaccess_add_deduplicated_users', [ $this, 'add_deduplicated_users' ], 10, 1 );
 
 		// create or update tables on plugin load.
-		add_action( 'plugins_loaded', [ __CLASS__, 'maybe_create_tables' ] );
+		add_action( 'plugins_loaded', [ self::class, 'maybe_create_tables' ] );
 	}
 
 	/**

@@ -34,8 +34,8 @@ class User_Roles implements Registrable {
 		add_filter( 'user_has_cap', [ $this, 'modify_user_caps' ], 10, 1 );
 
 		// create roles when plugin is loaded.
-		add_action( 'plugins_loaded', [ __CLASS__, 'create_brand_admin_role' ] );
-		add_action( 'plugins_loaded', [ __CLASS__, 'create_network_admin_role' ] );
+		add_action( 'plugins_loaded', [ self::class, 'create_brand_admin_role' ] );
+		add_action( 'plugins_loaded', [ self::class, 'create_network_admin_role' ] );
 	}
 
 	/**
