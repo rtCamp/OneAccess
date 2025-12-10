@@ -236,7 +236,7 @@ final class Settings implements Registrable {
 
 		$brands_to_return = [];
 		foreach ( $brands as $brand ) {
-			if ( ! is_array( $brand ) && ! isset( $brand['url'] ) ) {
+			if ( ! is_array( $brand ) || ! isset( $brand['url'] ) ) {
 				continue;
 			}
 

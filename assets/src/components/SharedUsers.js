@@ -183,7 +183,10 @@ const SharedUsers = ( { availableSites } ) => {
 
 	// Get sites available for adding (sites user is not already assigned to)
 	const getAvailableSitesForUser = ( user ) => {
-		const userSiteUrls = user.sites?.map( ( site ) => site.url.replace( /\/+$/, '' ) || site.site_url.replace( /\/+$/, '' ) ) || [];
+		const userSiteUrls = user.sites?.map( ( site ) => {
+			const url = site.url || site.site_url || '';
+			return url.replace( /\/+$/, '' );
+		} ) || [];
 		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.url.replace( /\/+$/, '' ) ) );
 	};
 
