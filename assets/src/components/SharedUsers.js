@@ -183,8 +183,11 @@ const SharedUsers = ( { availableSites } ) => {
 
 	// Get sites available for adding (sites user is not already assigned to)
 	const getAvailableSitesForUser = ( user ) => {
-		const userSiteUrls = user.sites?.map( ( site ) => site.url || site.site_url ) || [];
-		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.url ) );
+		const userSiteUrls = user.sites?.map( ( site ) => {
+			const url = site.url || site.site_url || '';
+			return url.replace( /\/+$/, '' );
+		} ) || [];
+		return availableSites.filter( ( site ) => ! userSiteUrls.includes( site.url.replace( /\/+$/, '' ) ) );
 	};
 
 	// Handle opening manage roles modal
@@ -206,6 +209,8 @@ const SharedUsers = ( { availableSites } ) => {
 		setSelectedUser( user );
 		setSelectedSitesToAdd( [] );
 		setShowAddToSitesModal( true );
+		setPasswordNotice( null );
+		setPassword( '' );
 	};
 
 	const handleUserDeletion = ( user ) => {
