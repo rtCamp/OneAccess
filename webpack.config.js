@@ -15,20 +15,12 @@ const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
 const sharedConfig = {
 	...defaultConfig,
 	output: {
-		path: path.resolve( process.cwd(), 'assets', 'build', 'js' ),
+		path: path.resolve( process.cwd(), 'build' ),
 		filename: '[name].js',
 		chunkFilename: '[name].js',
 	},
 	plugins: [
-		...defaultConfig.plugins
-			.map(
-				( plugin ) => {
-					if ( plugin.constructor.name === 'MiniCssExtractPlugin' ) {
-						plugin.options.filename = '../css/[name].css';
-					}
-					return plugin;
-				},
-			),
+		...defaultConfig.plugins,
 		new RemoveEmptyScriptsPlugin(),
 	],
 	optimization: {
@@ -44,39 +36,62 @@ const sharedConfig = {
 // Look for css/scss files and extract them into a build/css directory.
 const styles = {
 	...sharedConfig,
+	output: {
+		path: path.resolve( process.cwd(), 'build' ),
+		filename: '[name].js',
+		chunkFilename: '[name].js',
+	},
 	entry: () => {
 		const entries = {};
 
 		const dir = './assets/src/css';
 		fs.readdirSync( dir ).forEach( ( fileName ) => {
 			const fullPath = `${ dir }/${ fileName }`;
-			if ( ! fs.lstatSync( fullPath ).isDirectory() ) {
+			if (
+				! fs.lstatSync( fullPath ).isDirectory() &&
+				fileName.match( /\.(scss|css)$/ )
+			) {
 				entries[ fileName.replace( /\.[^/.]+$/, '' ) ] = fullPath;
 			}
 		} );
 
 		return entries;
 	},
-	module: {
-		...sharedConfig.module,
-	},
 	plugins: [
 		...sharedConfig.plugins.filter(
 			( plugin ) => plugin.constructor.name !== 'DependencyExtractionWebpackPlugin',
 		),
 	],
-
 };
 
 const scripts = {
 	...sharedConfig,
 	entry: {
 		main: path.resolve( process.cwd(), 'assets', 'src', 'js', 'main.js' ),
-		'user-profile': path.resolve( process.cwd(), 'assets', 'src', 'js', 'user-profle.js' ),
+		'user-profile': path.resolve( process.cwd(), 'assets', 'src', 'js', 'user-profile.js' ),
 		admin: path.resolve( process.cwd(), 'assets', 'src', 'js', 'admin.js' ),
-		settings: path.resolve( process.cwd(), 'assets', 'src', 'admin/settings', 'index.js' ),
-		plugin: path.resolve( process.cwd(), 'assets', 'src', 'admin/plugin', 'index.js' ),
-		'manage-user': path.resolve( process.cwd(), 'assets', 'src', 'admin/manage-user', 'index.js' ),
+		settings: path.resolve( process.cwd(), 'assets', 'src', 'admin/settings', 'index.tsx' ),
+		onboarding: path.resolve( process.cwd(), 'assets', 'src', 'admin', 'onboarding', 'index.tsx' ),
+		'manage-users': path.resolve( process.cwd(), 'assets', 'src', 'admin/manage-users', 'index.js' ),
+	},
+	module: {
+		rules:
+			sharedConfig?.module?.rules?.filter( ( rule ) => {
+				// Only keep JS/TS/JSX/TSX rules for scripts config, exclude CSS/SCSS
+				return (
+					! rule.test ||
+					( ! rule.test.toString().includes( 'scss' ) &&
+						! rule.test.toString().includes( 'css' ) )
+				);
+			} ) || [],
+	},
+	resolve: {
+		...sharedConfig.resolve,
+		extensions: [ '.tsx', '.ts', '.jsx', '.js' ],
+		alias: {
+			...( sharedConfig.resolve?.alias || {} ),
+			'@': path.resolve( process.cwd(), 'assets', 'src' ),
+		},
 	},
 };
 

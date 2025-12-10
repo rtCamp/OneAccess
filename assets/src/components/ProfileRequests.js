@@ -21,7 +21,7 @@ import { arrowLeft } from '@wordpress/icons';
 
 const NONCE = OneAccess.restNonce;
 const API_NAMESPACE = OneAccess.restUrl + '/oneaccess/v1';
-const API_KEY = OneAccess.apiKey;
+const API_KEY = OneAccess.api_key;
 const PER_PAGE = 20;
 
 const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
@@ -305,8 +305,8 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 	const siteOptions = [
 		{ label: __( 'All Sites', 'oneaccess' ), value: '' },
 		...( Array.isArray( availableSites ) ? availableSites : [] ).map( ( site ) => ( {
-			label: decodeEntities( site?.siteName ),
-			value: site?.siteName,
+			label: decodeEntities( site?.name ),
+			value: site?.name,
 		} ) ),
 	];
 
@@ -519,7 +519,7 @@ const ProfileRequests = ( { setProfileRequestsCount, availableSites } ) => {
 					{ selectedRequest.status === 'rejected' && selectedRequest.rejection_comment && selectedRequest.rejection_comment.trim().length > 0 && (
 						<div style={ { marginTop: '20px', background: '#fee2e2', borderLeft: '4px solid #dc2626', borderRadius: '4px', padding: '12px 16px' } }>
 							<p style={ { fontSize: '15px', color: '#7f1d1d', margin: '0' } }>
-								<strong style={ { color: '#991b1b', fontWeight: '600' } }>{ __( 'Rejection Comment: ', 'oneaccess' ) }</strong>
+								<strong style={ { color: '#991b1b', fontWeight: '600' } }>{ __( 'Rejection Comment:', 'oneaccess' ) }</strong>
 								<span>{ decodeEntities( selectedRequest.rejection_comment ) }</span>
 							</p>
 						</div>
