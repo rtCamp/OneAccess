@@ -729,13 +729,14 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site_url ) {
-			if ( ! isset( $oneaccess_sites_info[ $site_url['url'] ] ) ) {
+			$url = untrailingslashit( $site_url['url'] ?? '' );
+			if ( ! isset( $oneaccess_sites_info[ $url ] ) ) {
 				$error_log[] = [
-					'site_name' => $site_url['url'] ?? '',
+					'site_name' => $url ?? '',
 					'message'   => sprintf(
 						/* translators: %s is the site URL */
 						__( 'Site %s not found in OneAccess sites.', 'oneaccess' ),
-						esc_html( $site_url['url'] ?? '' )
+						esc_html( $url )
 					),
 				];
 				continue;
@@ -749,7 +750,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 				continue;
 			}
 
-			$api_key     = $oneaccess_sites_info[ $site_url['url'] ]['api_key'] ?? '';
+			$api_key     = $oneaccess_sites_info[ $url ]['api_key'] ?? '';
 			$user_role   = $site_url['role'] ?? 'subscriber';
 			$request_url = $site_url['url'] . '/wp-json/' . self::NAMESPACE . '/new-users';
 
@@ -938,12 +939,22 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$db_results           = [];
 
 		foreach ( $roles as $key => $value ) {
-			$site_url = (string) $oneaccess_sites_info[ $key ]['url'] ?: '';
-			$api_key  = $oneaccess_sites_info[ $key ]['api_key'] ?: '';
+			$site_key = untrailingslashit( $key );
+			$site     = $oneaccess_sites_info[ $site_key ] ?? [];
+			$site_url = $site['url'] ?? '';
+			$api_key  = $site['api_key'] ?? '';
 			$new_role = $value;
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
+				$error_log[] = [
+					'site_name' => $site_url,
+					'message'   => sprintf(
+						/* translators: %s is the site URL */
+						__( 'Skipping duplicate or invalid site %s.', 'oneaccess' ),
+						esc_html( $site_url )
+					),
+				];
 				continue;
 			}
 			$processed_sites[] = $site_url;
@@ -1077,7 +1088,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			return new \WP_REST_Response(
 				[
 					'success' => false,
-					'message' => __( 'Email already exists, please user different email.', 'oneaccess' ),
+					'message' => __( 'Email already exists, please use a different email.', 'oneaccess' ),
 				],
 				400
 			);
