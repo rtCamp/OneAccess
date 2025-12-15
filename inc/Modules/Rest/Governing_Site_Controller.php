@@ -750,7 +750,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 				continue;
 			}
 
-			$api_key     = $oneaccess_sites_info[ $site_url['url'] ]['api_key'] ?? '';
+			$api_key     = $oneaccess_sites_info[ $url ]['api_key'] ?? '';
 			$user_role   = $site_url['role'] ?? 'subscriber';
 			$request_url = $site_url['url'] . '/wp-json/' . self::NAMESPACE . '/new-users';
 
