@@ -499,7 +499,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => __( 'User deleted from sites successfully.', 'oneaccess' ),
+				'message' => count( $error_log ) ? __( 'User deleted from sites successfully.', 'oneaccess' ) : __( 'User could not be deleted from some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'               => $email,
 					'username'            => $username,
@@ -839,7 +839,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => __( 'User added to sites successfully.', 'oneaccess' ),
+				'message' => count( $error_log ) ? __( 'User added to sites successfully.', 'oneaccess' ) : __( 'User could not be added to some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'         => $email,
 					'username'      => $username,
@@ -938,8 +938,10 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$db_results           = [];
 
 		foreach ( $roles as $key => $value ) {
-			$site_url = (string) $oneaccess_sites_info[ $key ]['url'] ?: '';
-			$api_key  = $oneaccess_sites_info[ $key ]['api_key'] ?: '';
+			$site_key = untrailingslashit( $key );
+			$site     = (array) $oneaccess_sites_info[ $site_key ] ?: [];
+			$site_url = trailingslashit( $site['url'] ) ?? '';
+			$api_key  = $site['api_key'] ?? '';
 			$new_role = $value;
 
 			// Skip duplicate or invalid sites.
@@ -1014,7 +1016,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => __( 'User roles updated successfully.', 'oneaccess' ),
+				'message' => count( $error_log ) ? __( 'User roles updated successfully.', 'oneaccess' ) : __( 'User roles could not be updated on some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'         => $email,
 					'username'      => $username,
@@ -1393,7 +1395,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site ) {
-			$site_url = $site['url'] ?? '';
+			$site_url = untrailingslashit( $site['url'] ) ?? '';
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
@@ -1442,22 +1444,19 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 						__( 'Error creating user on site %s.', 'oneaccess' ),
 						$site_name
 					),
-					'response'  => $response,
 				];
 				continue;
 			}
 
 			$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( ! $response_body['success'] ) {
+			if ( ! empty( $response_body['success'] ) ) {
 				$error_log[] = [
-					'site_name'     => $site_name,
-					'message'       => $response_body['message'] ?? sprintf(
+					'site_name' => $site_name,
+					'message'   => $response_body['message'] ?? sprintf(
 						/* translators: %s is the site name */
 						__( 'Failed to create user on site %s.', 'oneaccess' ),
 						$site_name
 					),
-					'response'      => $response,
-					'response_body' => $response_body,
 				];
 				continue;
 			}
