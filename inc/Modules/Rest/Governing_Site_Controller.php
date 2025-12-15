@@ -729,7 +729,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site_url ) {
-			$url = untrailingslashit( $site_url['url'] );
+			$url = ! empty( $site_url['url'] ) ? untrailingslashit( $site_url['url'] ) : '';
 			if ( ! isset( $oneaccess_sites_info[ $url ] ) ) {
 				$error_log[] = [
 					'site_name' => $url ?? '',
