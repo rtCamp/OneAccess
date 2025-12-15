@@ -499,7 +499,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => count( $error_log ) ? __( 'User deleted from sites successfully.', 'oneaccess' ) : __( 'User could not be deleted from some sites.', 'oneaccess' ),
+				'message' => count( $error_log ) === 0 ? __( 'User deleted from sites successfully.', 'oneaccess' ) : __( 'User could not be deleted from some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'               => $email,
 					'username'            => $username,
@@ -839,7 +839,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => count( $error_log ) ? __( 'User added to sites successfully.', 'oneaccess' ) : __( 'User could not be added to some sites.', 'oneaccess' ),
+				'message' => count( $error_log ) === 0 ? __( 'User added to sites successfully.', 'oneaccess' ) : __( 'User could not be added to some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'         => $email,
 					'username'      => $username,
@@ -940,7 +940,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		foreach ( $roles as $key => $value ) {
 			$site_key = untrailingslashit( $key );
 			$site     = (array) $oneaccess_sites_info[ $site_key ] ?: [];
-			$site_url = trailingslashit( $site['url'] ) ?? '';
+			$site_url = trailingslashit( $site['url'] ?? '' );
 			$api_key  = $site['api_key'] ?? '';
 			$new_role = $value;
 
@@ -1016,7 +1016,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => count( $error_log ) ? __( 'User roles updated successfully.', 'oneaccess' ) : __( 'User roles could not be updated on some sites.', 'oneaccess' ),
+				'message' => count( $error_log ) === 0 ? __( 'User roles updated successfully.', 'oneaccess' ) : __( 'User roles could not be updated on some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'         => $email,
 					'username'      => $username,
@@ -1079,7 +1079,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			return new \WP_REST_Response(
 				[
 					'success' => false,
-					'message' => __( 'Email already exists, please user different email.', 'oneaccess' ),
+					'message' => __( 'Email already exists, please use a different email.', 'oneaccess' ),
 				],
 				400
 			);
