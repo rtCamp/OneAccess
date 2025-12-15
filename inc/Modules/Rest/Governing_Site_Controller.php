@@ -939,7 +939,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 		foreach ( $roles as $key => $value ) {
 			$site_key = untrailingslashit( $key );
-			$site     = (array) $oneaccess_sites_info[ $site_key ] ?: [];
+			$site     = (array) ( $oneaccess_sites_info[ $site_key ] ?? [] );
 			$site_url = trailingslashit( $site['url'] ?? '' );
 			$api_key  = $site['api_key'] ?? '';
 			$new_role = $value;
@@ -1395,7 +1395,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site ) {
-			$site_url = untrailingslashit( $site['url'] ) ?? '';
+			$site_url = untrailingslashit( $site['url'] ?? '' );
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {

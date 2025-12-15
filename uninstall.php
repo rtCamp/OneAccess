@@ -144,6 +144,9 @@ function remove_user_roles_caps(): void {
 			}
 			$user->remove_role( $role );
 		}
+
+		// Finally remove the role itself.
+		remove_role( $role );
 	}
 }
 
