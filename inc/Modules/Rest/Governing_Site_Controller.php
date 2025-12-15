@@ -1449,7 +1449,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			}
 
 			$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( ! empty( $response_body['success'] ) ) {
+			if ( empty( $response_body['success'] ) ) {
 				$error_log[] = [
 					'site_name' => $site_name,
 					'message'   => $response_body['message'] ?? sprintf(
