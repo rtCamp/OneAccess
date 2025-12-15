@@ -729,13 +729,14 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site_url ) {
-			if ( ! isset( $oneaccess_sites_info[ $site_url['url'] ] ) ) {
+			$url = untrailingslashit( $site_url['url'] );
+			if ( ! isset( $oneaccess_sites_info[ $url ] ) ) {
 				$error_log[] = [
-					'site_name' => $site_url['url'] ?? '',
+					'site_name' => $url ?? '',
 					'message'   => sprintf(
 						/* translators: %s is the site URL */
 						__( 'Site %s not found in OneAccess sites.', 'oneaccess' ),
-						esc_html( $site_url['url'] ?? '' )
+						esc_html( $url )
 					),
 				];
 				continue;
@@ -940,7 +941,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		foreach ( $roles as $key => $value ) {
 			$site_key = untrailingslashit( $key );
 			$site     = (array) ( $oneaccess_sites_info[ $site_key ] ?? [] );
-			$site_url = trailingslashit( $site['url'] ?? '' );
+			$site_url = ! empty( $site['url'] ) ? trailingslashit( $site['url'] ) : '';
 			$api_key  = $site['api_key'] ?? '';
 			$new_role = $value;
 
@@ -1395,7 +1396,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site ) {
-			$site_url = untrailingslashit( $site['url'] ?? '' );
+			$site_url = ! empty( $site['url'] ) ? untrailingslashit( $site['url'] ) : '';
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
