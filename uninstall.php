@@ -70,46 +70,46 @@ function delete_network_plugin_data(): void {
 function delete_plugin_data(): void {
 
 	// list of actions to be cleared on uninstall.
-		$actions_to_clear = [
-			'oneaccess_governing_site_configured',
-			'oneaccess_add_deduplicated_users',
-		];
+	$actions_to_clear = [
+		'oneaccess_governing_site_configured',
+		'oneaccess_add_deduplicated_users',
+	];
 
-		// Clear scheduled actions.
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			foreach ( $actions_to_clear as $action ) {
-				as_unschedule_all_actions( $action );
-			}
+	// Clear scheduled actions.
+	if ( function_exists( 'as_unschedule_all_actions' ) ) {
+		foreach ( $actions_to_clear as $action ) {
+			as_unschedule_all_actions( $action );
 		}
+	}
 
-		// Options to clean up.
-		$options = [
-			'oneaccess_child_site_api_key',
-			'oneaccess_consumer_api_key',
-			'oneaccess_db_version',
-			'oneaccess_governing_site_url',
-			'oneaccess_new_users',
-			'oneaccess_parent_site_url',
-			'oneaccess_profile_update_requests',
-			'oneaccess_shared_sites',
-			'oneaccess_site_type',
-		];
+	// Options to clean up.
+	$options = [
+		'oneaccess_child_site_api_key',
+		'oneaccess_consumer_api_key',
+		'oneaccess_db_version',
+		'oneaccess_governing_site_url',
+		'oneaccess_new_users',
+		'oneaccess_parent_site_url',
+		'oneaccess_profile_update_requests',
+		'oneaccess_shared_sites',
+		'oneaccess_site_type',
+	];
 
-		foreach ( $options as $option ) {
-			delete_option( $option );
-		}
+	foreach ( $options as $option ) {
+		delete_option( $option );
+	}
 
-		// Drop custom tables created by the OneAccess.
-		$tables_to_drop = [
-			'oneaccess_deduplicated_users',
-			'oneaccess_profile_requests',
-		];
+	// Drop custom tables created by the OneAccess.
+	$tables_to_drop = [
+		'oneaccess_deduplicated_users',
+		'oneaccess_profile_requests',
+	];
 
-		global $wpdb;
-		foreach ( $tables_to_drop as $table ) {
-			$full_table_name = $wpdb->prefix . $table;
-			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %s', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
-		}
+	global $wpdb;
+	foreach ( $tables_to_drop as $table ) {
+		$full_table_name = $wpdb->prefix . $table;
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $full_table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- this is to drop table on uninstall
+	}
 }
 
 /**
@@ -144,6 +144,9 @@ function remove_user_roles_caps(): void {
 			}
 			$user->remove_role( $role );
 		}
+
+		// Finally remove the role itself.
+		remove_role( $role );
 	}
 }
 

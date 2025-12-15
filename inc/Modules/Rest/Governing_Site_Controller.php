@@ -499,7 +499,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => __( 'User deleted from sites successfully.', 'oneaccess' ),
+				'message' => count( $error_log ) === 0 ? __( 'User deleted from sites successfully.', 'oneaccess' ) : __( 'User could not be deleted from some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'               => $email,
 					'username'            => $username,
@@ -729,7 +729,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site_url ) {
-			$url = untrailingslashit( $site_url['url'] ?? '' );
+			$url = ! empty( $site_url['url'] ) ? untrailingslashit( $site_url['url'] ) : '';
 			if ( ! isset( $oneaccess_sites_info[ $url ] ) ) {
 				$error_log[] = [
 					'site_name' => $url ?? '',
@@ -840,7 +840,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => __( 'User added to sites successfully.', 'oneaccess' ),
+				'message' => count( $error_log ) === 0 ? __( 'User added to sites successfully.', 'oneaccess' ) : __( 'User could not be added to some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'         => $email,
 					'username'      => $username,
@@ -940,21 +940,13 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 
 		foreach ( $roles as $key => $value ) {
 			$site_key = untrailingslashit( $key );
-			$site     = $oneaccess_sites_info[ $site_key ] ?? [];
-			$site_url = $site['url'] ?? '';
+			$site     = (array) ( $oneaccess_sites_info[ $site_key ] ?? [] );
+			$site_url = ! empty( $site['url'] ) ? trailingslashit( $site['url'] ) : '';
 			$api_key  = $site['api_key'] ?? '';
 			$new_role = $value;
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
-				$error_log[] = [
-					'site_name' => $site_url,
-					'message'   => sprintf(
-						/* translators: %s is the site URL */
-						__( 'Skipping duplicate or invalid site %s.', 'oneaccess' ),
-						esc_html( $site_url )
-					),
-				];
 				continue;
 			}
 			$processed_sites[] = $site_url;
@@ -1013,7 +1005,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			}
 
 			$response_data[] = [
-				'site'    => $oneaccess_sites_info[ $key ]['name'] ?: $site_url,
+				'site'    => $site_url,
 				'status'  => 'success',
 				'message' => __( 'User role updated successfully.', 'oneaccess' ),
 			];
@@ -1025,7 +1017,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		return new \WP_REST_Response(
 			[
 				'success' => count( $error_log ) === 0,
-				'message' => __( 'User roles updated successfully.', 'oneaccess' ),
+				'message' => count( $error_log ) === 0 ? __( 'User roles updated successfully.', 'oneaccess' ) : __( 'User roles could not be updated on some sites.', 'oneaccess' ),
 				'data'    => [
 					'email'         => $email,
 					'username'      => $username,
@@ -1404,7 +1396,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 		$error_log            = [];
 
 		foreach ( $sites as $site ) {
-			$site_url = $site['url'] ?? '';
+			$site_url = ! empty( $site['url'] ) ? untrailingslashit( $site['url'] ) : '';
 
 			// Skip duplicate or invalid sites.
 			if ( empty( $site_url ) || in_array( $site_url, $processed_sites, true ) ) {
@@ -1453,22 +1445,19 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 						__( 'Error creating user on site %s.', 'oneaccess' ),
 						$site_name
 					),
-					'response'  => $response,
 				];
 				continue;
 			}
 
 			$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( ! $response_body['success'] ) {
+			if ( empty( $response_body['success'] ) ) {
 				$error_log[] = [
-					'site_name'     => $site_name,
-					'message'       => $response_body['message'] ?? sprintf(
+					'site_name' => $site_name,
+					'message'   => $response_body['message'] ?? sprintf(
 						/* translators: %s is the site name */
 						__( 'Failed to create user on site %s.', 'oneaccess' ),
 						$site_name
 					),
-					'response'      => $response,
-					'response_body' => $response_body,
 				];
 				continue;
 			}

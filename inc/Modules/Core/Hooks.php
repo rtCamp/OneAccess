@@ -44,8 +44,14 @@ class Hooks implements Registrable {
 		// Trigger bulk user deduplication when governing site is configured.
 		add_action( 'oneaccess_governing_site_configured', [ $this, 'user_deduplication' ] );
 
-		// Send individual users to governing site when they are created.
-		add_action( 'user_register', [ $this->actions_controller, 'send_single_user_for_deduplication' ] );
+		/**
+		 * Send individual users to governing site when they are created.
+		 *
+		 * Using profile_update instead of user_register as usermeta might not be set during user_register.
+		 *
+		 * @see https://developer.wordpress.org/reference/hooks/user_register/#more-information
+		 */
+		add_action( 'profile_update', [ $this->actions_controller, 'send_single_user_for_deduplication' ], 99 );
 	}
 
 	/**
