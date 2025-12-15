@@ -1004,7 +1004,7 @@ class Governing_Site_Controller extends Abstract_REST_Controller {
 			}
 
 			$response_data[] = [
-				'site'    => $oneaccess_sites_info[ $key ]['name'] ?: $site_url,
+				'site'    => $site_url,
 				'status'  => 'success',
 				'message' => __( 'User role updated successfully.', 'oneaccess' ),
 			];
