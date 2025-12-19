@@ -225,7 +225,7 @@ Yes, you can remove users from selective sites while maintaining their access on
 
 ### What happens to my existing users?
 
-Pre-existing users will continue to exist, they will only be manageable via the Governing site once the plugin is configured. When a new brand site is connected, existing users are automatically synced to the governing site for centralized management.
+Pre-existing users will continue to exist, they will now only be manageable via the Governing site. When a new brand site is connected, existing users are automatically synced to the governing site for centralized management.
 
 ## Troubleshooting
 
