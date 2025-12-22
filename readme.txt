@@ -124,9 +124,6 @@ OneAccess creates two custom roles: Network Admin (for governing site administra
 
 == Changelog ==
 
-= 1.1.0-beta.1 =
-* Feat: Refactor for WPCS and best practices
-
 = 1.0.0-beta =
 * Initial release
 * Centralized user management dashboard
@@ -149,8 +146,6 @@ Initial release of OneAccess. Perfect for enterprises managing users across mult
 
 == Requirements ==
 
-* WordPress 6.8 or higher
-* PHP 8.0 or higher
 * Multiple WordPress installations for full functionality
 * Network connectivity between governing and brand sites
 * WordPress REST API enabled on all sites
