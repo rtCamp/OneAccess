@@ -2,10 +2,10 @@
 Contributors: Utsav Patel, rtCamp
 Donate link: https://rtcamp.com/
 Tags: OneAccess, OnePress, User Manager, Multi-site, Enterprise User Management
-Requires at least: 6.5
-Tested up to: 6.8
-Stable tag: 1.0.0
-Requires PHP: 7.4
+Requires at least: 6.8
+Tested up to: 6.9
+Stable tag: 1.1.0-beta.1
+Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -124,7 +124,7 @@ OneAccess creates two custom roles: Network Admin (for governing site administra
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.0.0-beta =
 * Initial release
 * Centralized user management dashboard
 * Multi-site user creation and role assignment
@@ -138,13 +138,11 @@ OneAccess creates two custom roles: Network Admin (for governing site administra
 
 == Upgrade Notice ==
 
-= 1.0.0 =
+= 1.0.0-beta =
 Initial release of OneAccess. Perfect for enterprises managing users across multiple WordPress sites with centralized control and approval workflows.
 
 == Requirements ==
 
-* WordPress 6.5 or higher
-* PHP 7.4 or higher
 * Multiple WordPress installations for full functionality
 * Network connectivity between governing and brand sites
 * WordPress REST API enabled on all sites
